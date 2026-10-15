@@ -1,0 +1,53 @@
+{
+  "notice": "Export completed with explicit settings. This report does not establish visual, accessibility, scientific-integrity, or journal-submission compliance.",
+  "outputs": [
+    {
+      "format": "pdf",
+      "kind": "vector-container",
+      "path": "/Users/neo/repos/skipnorm/paper/fig4_topological_obstructions_and_controls.pdf",
+      "size_bytes": 93793
+    },
+    {
+      "format": "png",
+      "kind": "raster",
+      "path": "/Users/neo/repos/skipnorm/paper/fig4_topological_obstructions_and_controls.png",
+      "size_bytes": 1136217
+    }
+  ],
+  "provenance": {
+    "missing_data": "none",
+    "raw_data": [
+      "results/stage1/stage1_results.json",
+      "results/stage2/stage2_results.json"
+    ],
+    "transformations": [
+      "encoded true trajectories on double_well_balanced.npz",
+      "analytical 1:1 harmonic oscillator Hopf-fiber warp",
+      "translated identity encoder sweep a in [2, 10000]"
+    ],
+    "uncertainty": "exact analytical controls & 5-seed double-well evaluation"
+  },
+  "schema_version": "1.0",
+  "settings": {
+    "bbox_inches": null,
+    "dpi": 600.0,
+    "facecolor": "white",
+    "figure_size_inches": [
+      7.2,
+      5.4
+    ],
+    "font_mode": "truetype",
+    "formats": [
+      "pdf",
+      "png"
+    ],
+    "pad_inches": 0.1,
+    "tiff_rgb": false,
+    "transparent": false
+  },
+  "versions": {
+    "matplotlib": "3.11.2",
+    "pillow": "12.3.0"
+  },
+  "warnings": []
+}

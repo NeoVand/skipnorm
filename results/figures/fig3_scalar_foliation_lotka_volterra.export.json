@@ -1,0 +1,50 @@
+{
+  "notice": "Export completed with explicit settings. This report does not establish visual, accessibility, scientific-integrity, or journal-submission compliance.",
+  "outputs": [
+    {
+      "format": "pdf",
+      "kind": "vector-container",
+      "path": "/Users/neo/repos/skipnorm/paper/fig3_scalar_foliation_lotka_volterra.pdf",
+      "size_bytes": 95435
+    },
+    {
+      "format": "png",
+      "kind": "raster",
+      "path": "/Users/neo/repos/skipnorm/paper/fig3_scalar_foliation_lotka_volterra.png",
+      "size_bytes": 1194258
+    }
+  ],
+  "provenance": {
+    "dataset_split": "data/splits/lotka_volterra.npz (whole-orbit disjoint)",
+    "missing_data": "none",
+    "raw_data": "results/stage2/stage2_results.json",
+    "transformations": [
+      "encoded true trajectories z_t = E(x_t)",
+      "isotonic regression R^2"
+    ],
+    "uncertainty": "mean ± 1 SD across n=5 random seeds (and within-orbit SD in Panel c)"
+  },
+  "schema_version": "1.0",
+  "settings": {
+    "bbox_inches": null,
+    "dpi": 600.0,
+    "facecolor": "white",
+    "figure_size_inches": [
+      7.2,
+      5.4
+    ],
+    "font_mode": "truetype",
+    "formats": [
+      "pdf",
+      "png"
+    ],
+    "pad_inches": 0.1,
+    "tiff_rgb": false,
+    "transparent": false
+  },
+  "versions": {
+    "matplotlib": "3.11.2",
+    "pillow": "12.3.0"
+  },
+  "warnings": []
+}

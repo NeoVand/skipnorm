@@ -1,0 +1,50 @@
+{
+  "notice": "Export completed with explicit settings. This report does not establish visual, accessibility, scientific-integrity, or journal-submission compliance.",
+  "outputs": [
+    {
+      "format": "pdf",
+      "kind": "vector-container",
+      "path": "/Users/neo/repos/skipnorm/paper/fig1_geometry_and_spectra.pdf",
+      "size_bytes": 101593
+    },
+    {
+      "format": "png",
+      "kind": "raster",
+      "path": "/Users/neo/repos/skipnorm/paper/fig1_geometry_and_spectra.png",
+      "size_bytes": 907157
+    }
+  ],
+  "provenance": {
+    "missing_data": "none",
+    "raw_data": "results/stage1/stage1_results.json",
+    "script": "experiments/stage4_generate_publication_figures.py",
+    "transformations": [
+      "exact JAX float64 SVD",
+      "depth-100 VJP pullback"
+    ],
+    "uncertainty": "deterministic analytical & machine-precision autodiff verification"
+  },
+  "schema_version": "1.0",
+  "settings": {
+    "bbox_inches": null,
+    "dpi": 600.0,
+    "facecolor": "white",
+    "figure_size_inches": [
+      7.2,
+      5.4
+    ],
+    "font_mode": "truetype",
+    "formats": [
+      "pdf",
+      "png"
+    ],
+    "pad_inches": 0.1,
+    "tiff_rgb": false,
+    "transparent": false
+  },
+  "versions": {
+    "matplotlib": "3.11.2",
+    "pillow": "12.3.0"
+  },
+  "warnings": []
+}

@@ -1,0 +1,49 @@
+{
+  "notice": "Export completed with explicit settings. This report does not establish visual, accessibility, scientific-integrity, or journal-submission compliance.",
+  "outputs": [
+    {
+      "format": "pdf",
+      "kind": "vector-container",
+      "path": "/Users/neo/repos/skipnorm/paper/fig5_toroidal_kblock_foliation.pdf",
+      "size_bytes": 80075
+    },
+    {
+      "format": "png",
+      "kind": "raster",
+      "path": "/Users/neo/repos/skipnorm/paper/fig5_toroidal_kblock_foliation.png",
+      "size_bytes": 838339
+    }
+  ],
+  "provenance": {
+    "dataset_split": "data/splits/coupled_torus_4d.npz (whole-orbit disjoint)",
+    "missing_data": "none",
+    "raw_data": "results/stage2/stage2_results.json",
+    "transformations": [
+      "degree-2 ridge readout from 1 scalar vs 2 block radii"
+    ],
+    "uncertainty": "mean ± 1 SD across n=5 independent training seeds"
+  },
+  "schema_version": "1.0",
+  "settings": {
+    "bbox_inches": null,
+    "dpi": 600.0,
+    "facecolor": "white",
+    "figure_size_inches": [
+      7.2,
+      5.4
+    ],
+    "font_mode": "truetype",
+    "formats": [
+      "pdf",
+      "png"
+    ],
+    "pad_inches": 0.1,
+    "tiff_rgb": false,
+    "transparent": false
+  },
+  "versions": {
+    "matplotlib": "3.11.2",
+    "pillow": "12.3.0"
+  },
+  "warnings": []
+}

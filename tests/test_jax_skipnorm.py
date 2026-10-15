@@ -1,4 +1,4 @@
-"""Unit tests for the pure JAX + Equinox SkipNorm implementation (float64)."""
+"""Unit tests for the pure JAX + Equinox SkipNorm implementation (float64) and locked metrics."""
 
 import unittest
 import jax
@@ -6,12 +6,24 @@ import jax
 jax.config.update("jax_enable_x64", True)
 
 import jax.numpy as jnp
+import numpy as np
 
 from skipnorm.jax_layers import (
+    BijectiveCouplingMap,
     block_geodesic_skip_norm_fn,
+    cayley_orthogonal_matrix,
     geodesic_skip_norm_fn,
+    projected_residual_skip_norm_fn,
     skip_norm_fn,
+    state_dependent_cayley_step,
     tangent_project,
+)
+from skipnorm.metrics import (
+    compute_k_invariant_readout_r2,
+    compute_monotone_r2_and_spearman,
+    compute_orbit_radii,
+    compute_ovr,
+    compute_radial_cv,
 )
 
 
@@ -68,6 +80,11 @@ class TestJaxSkipNorm(unittest.TestCase):
         self.assertLess(float(jnp.max(jnp.abs(nx - ny) / nx)), 1e-14)
         self.assertTrue(bool(jnp.all(jnp.sum(y_hat * x, axis=-1) > 0.0)))
 
+        # Projected residual also preserves norm
+        y_proj = projected_residual_skip_norm_fn(x, f_x, alpha=0.5, axis=-1)
+        nproj = jnp.linalg.norm(y_proj, axis=-1)
+        self.assertLess(float(jnp.max(jnp.abs(nx - nproj) / nx)), 1e-14)
+
     def test_jax_block_geodesic_skip_norm_multi_invariants(self):
         key = jax.random.PRNGKey(3)
         k1, k2 = jax.random.split(key)
@@ -79,6 +96,43 @@ class TestJaxSkipNorm(unittest.TestCase):
             nb_x = jnp.linalg.norm(x[:, 2 * b : 2 * (b + 1)], axis=-1)
             nb_y = jnp.linalg.norm(y_hat[:, 2 * b : 2 * (b + 1)], axis=-1)
             self.assertLess(float(jnp.max(jnp.abs(nb_x - nb_y) / nb_x)), 1e-14)
+
+    def test_bijective_coupling_map_exact_inverse(self):
+        key = jax.random.PRNGKey(4)
+        k1, k2 = jax.random.split(key)
+        bij = BijectiveCouplingMap(dim=4, num_layers=4, width=16, depth=2, key=k1)
+        x = jax.random.normal(k2, (8, 4), dtype=jnp.float64)
+        z = jax.vmap(bij)(x)
+        x_rec = jax.vmap(bij.inverse)(z)
+        self.assertLess(float(jnp.max(jnp.abs(x - x_rec))), 1e-13)
+
+    def test_cayley_orthogonal_norm_conservation(self):
+        key = jax.random.PRNGKey(5)
+        k1, k2 = jax.random.split(key)
+        raw = jax.random.normal(k1, (6, 6), dtype=jnp.float64)
+        x = jax.random.normal(k2, (6,), dtype=jnp.float64)
+        Q = cayley_orthogonal_matrix(raw, alpha=0.2)
+        self.assertLess(float(jnp.linalg.norm(Q.T @ Q - jnp.eye(6))), 1e-14)
+        y = state_dependent_cayley_step(x, raw, alpha=0.2)
+        self.assertLess(float(jnp.abs(jnp.linalg.norm(y) - jnp.linalg.norm(x))), 1e-14)
+
+    def test_metrics_and_degenerate_ovr_guard(self):
+        # Constant radius across all orbits -> OVR must be flagged 'undefined (collapsed)'
+        r_collapsed = np.ones((10, 50), dtype=np.float64) * 2.0
+        ovr_col = compute_ovr(r_collapsed, sigma_lat=1.0)
+        self.assertIsNone(ovr_col["ovr"])
+        self.assertEqual(ovr_col["status"], "undefined (collapsed)")
+
+        # Distinct concentric radii -> CV = 0, OVR = 0, Isotonic R2 = 1.0, |rho_S| = 1.0
+        c_vals = np.linspace(1.0, 5.0, 12)
+        r_clean = np.repeat(c_vals[:, None] ** 2, 40, axis=1)
+        cv_clean = compute_radial_cv(r_clean)
+        ovr_clean = compute_ovr(r_clean, sigma_lat=1.0)
+        mono_clean = compute_monotone_r2_and_spearman(c_vals, np.mean(r_clean, axis=1))
+        self.assertLess(cv_clean["mean_cv"], 1e-15)
+        self.assertLess(ovr_clean["ovr"], 1e-15)
+        self.assertGreater(mono_clean["isotonic_r2"], 0.999999)
+        self.assertGreater(mono_clean["spearman_abs_rho"], 0.999999)
 
 
 if __name__ == "__main__":
