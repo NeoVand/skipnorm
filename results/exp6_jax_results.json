@@ -1,0 +1,164 @@
+{
+  "part1_exact_float64_theorems": {
+    "norm_rel_err_50_layers": 9.601928861622978e-16,
+    "radial_grad_norm_err_50_layers": 4.440892098500626e-16,
+    "radial_grad_vec_err_50_layers": 2.2468412757639185e-15,
+    "bottleneck_ranks": {
+      "2": {
+        "LayerNorm_rank": 0,
+        "RMSNorm_rank": 1,
+        "SkipNorm_rank": 2,
+        "LayerNorm_sv": [
+          3.223567717029057e-17,
+          6.4050782784688165e-34
+        ],
+        "RMSNorm_sv": [
+          0.1323436825447834,
+          9.887747214345563e-17
+        ],
+        "SkipNorm_sv": [
+          1.0000000000000004,
+          0.2644485412134455
+        ]
+      },
+      "3": {
+        "LayerNorm_rank": 1,
+        "RMSNorm_rank": 2,
+        "SkipNorm_rank": 3,
+        "LayerNorm_sv": [
+          1.0047746194666656,
+          4.555470733094608e-16,
+          1.0475513760351448e-16
+        ],
+        "RMSNorm_sv": [
+          0.9469974344129921,
+          0.00181099087223171,
+          1.8754797227090975e-16
+        ],
+        "SkipNorm_sv": [
+          0.9999999999999997,
+          0.5839667318340332,
+          0.0011167489822123669
+        ]
+      },
+      "4": {
+        "LayerNorm_rank": 2,
+        "RMSNorm_rank": 3,
+        "SkipNorm_rank": 4,
+        "LayerNorm_sv": [
+          0.23625302741134113,
+          0.10590605937328454,
+          1.7572536947517936e-16,
+          1.422338400293761e-17
+        ],
+        "RMSNorm_sv": [
+          0.42629252025537107,
+          0.1903969547424702,
+          0.03806164095312345,
+          5.927191963808896e-18
+        ],
+        "SkipNorm_sv": [
+          0.9999999999999997,
+          0.428562755184376,
+          0.19141092002802934,
+          0.0382643394820473
+        ]
+      },
+      "8": {
+        "LayerNorm_rank": 6,
+        "RMSNorm_rank": 7,
+        "SkipNorm_rank": 8,
+        "LayerNorm_sv": [
+          1.4556642451552853,
+          1.2052096827241594,
+          0.5341213737750835,
+          0.34029342438870475,
+          0.19255718678928213,
+          0.06296894504039612,
+          6.303780827338975e-17,
+          7.599532963119208e-18
+        ],
+        "RMSNorm_sv": [
+          1.0585759410181879,
+          1.0020953963446564,
+          0.4235679950493896,
+          0.29499680040405774,
+          0.1910216260865762,
+          0.08520444037332352,
+          0.044162112976559045,
+          5.800525064018501e-17
+        ],
+        "SkipNorm_sv": [
+          1.5855748284798203,
+          1.5009761459828004,
+          1.0000000000000002,
+          0.6344360617661514,
+          0.441857294388219,
+          0.28611937063942344,
+          0.12762241299448743,
+          0.06614767254275905
+        ]
+      }
+    }
+  },
+  "part2_lotka_volterra_non_centered": {
+    "Raw Input ||(u,v)||_2": {
+      "intra_orbit_cv_pct": 42.32741503496622,
+      "noether_r2_pct": 0.09441233114674263,
+      "spearman_rho_all_points": 0.13240491876027577,
+      "rollout_500_V_drift_pct": null
+    },
+    "Standard ResNet (d=2)": {
+      "intra_orbit_cv_pct": 47.67690288642943,
+      "noether_r2_pct": 0.1990518076973924,
+      "spearman_rho_all_points": 0.08608196329843015,
+      "rollout_500_V_drift_pct": 34154450532.68187,
+      "train_loss": 6.829811253147064e-05
+    },
+    "Latent RMSNorm (d=2)": {
+      "intra_orbit_cv_pct": 9.240540925304273,
+      "noether_r2_pct": 8.081747885392222,
+      "spearman_rho_all_points": 0.28874434563519613,
+      "rollout_500_V_drift_pct": 29.762736448671912,
+      "train_loss": 0.08112409777898133
+    },
+    "Overparameterized SkipNorm (d=8)": {
+      "intra_orbit_cv_pct": 2.7965190963762345,
+      "noether_r2_pct": 0.49902936797624475,
+      "spearman_rho_all_points": 0.02859370332910214,
+      "rollout_500_V_drift_pct": 24.179967166137022,
+      "train_loss": 0.00010042530694993636
+    },
+    "Dimension-Matched GeodesicSkipNorm (d=2)": {
+      "intra_orbit_cv_pct": 8.311326072711388,
+      "noether_r2_pct": 95.4710345685132,
+      "spearman_rho_all_points": 0.9768225829598631,
+      "rollout_500_V_drift_pct": 22.659576550586042,
+      "train_loss": 0.00042460254667912894
+    }
+  },
+  "part3_toroidal_two_invariants": {
+    "Standard ResNet (4D)": {
+      "block1_orbit_cv_pct": 34.441005580929065,
+      "block2_orbit_cv_pct": 37.90109931208839,
+      "mean_block_cv_pct": 36.171052446508725,
+      "joint_two_invariant_r2_pct": 49.198678509336716,
+      "train_loss": 0.0074584061964170145
+    },
+    "Single-Sphere SkipNorm (K=1 on S^3)": {
+      "block1_orbit_cv_pct": 34.84327740639681,
+      "block2_orbit_cv_pct": 37.92006738240584,
+      "mean_block_cv_pct": 36.38167239440132,
+      "joint_two_invariant_r2_pct": 51.73710979306049,
+      "train_loss": 0.007136310198853016
+    },
+    "Toroidal Block SkipNorm (K=2 on T^2)": {
+      "block1_orbit_cv_pct": 2.1669699031153655,
+      "block2_orbit_cv_pct": 3.725754708082346,
+      "mean_block_cv_pct": 2.9463623055988557,
+      "joint_two_invariant_r2_pct": 98.96487464901112,
+      "train_loss": 0.007758517929537491
+    }
+  },
+  "total_runtime_sec": 81.73496675491333
+}
