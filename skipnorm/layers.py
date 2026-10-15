@@ -53,7 +53,7 @@ def skip_norm(
         if d_in != d_out:
             norm_x = norm_x * ((d_out / d_in) ** (1.0 / p))
 
-    return (y / (norm_y + eps)) * norm_x
+    return (y / torch.clamp(norm_y, min=eps)) * norm_x
 
 
 class SkipNorm(nn.Module):
@@ -115,11 +115,11 @@ class AdaptiveSkipNorm(nn.Module):
         y = self.block(x)
         norm_x = torch.linalg.vector_norm(x, ord=self.p, dim=self.dim, keepdim=True)
         norm_y = torch.linalg.vector_norm(y, ord=self.p, dim=self.dim, keepdim=True)
-        u_y = y / (norm_y + self.eps)
+        u_y = y / torch.clamp(norm_y, min=self.eps)
 
         gate = torch.sigmoid(self.gate_logit)
         # Power law + affine fallback allows denoising noisy norms while preserving scale cues
-        r_skip = torch.pow(norm_x + self.eps, self.norm_power)
+        r_skip = torch.pow(torch.clamp(norm_x, min=self.eps), self.norm_power)
         r_const = F.softplus(self.learned_scale) * (y.shape[self.dim] ** (1.0 / self.p))
         r_out = gate * r_skip + (1.0 - gate) * r_const
         return u_y * r_out
@@ -168,10 +168,38 @@ class SphericalNorm(nn.Module):
 
     def forward(self, y: torch.Tensor) -> torch.Tensor:
         norm_y = torch.linalg.vector_norm(y, ord=self.p, dim=self.dim, keepdim=True)
-        out = y / (norm_y + self.eps)
+        out = y / torch.clamp(norm_y, min=self.eps)
         if self.scale_by_dim:
             out = out * (y.shape[self.dim] ** (1.0 / self.p))
         return out
+
+
+
+class GeodesicSkipNorm(nn.Module):
+    """Projective Unitary / Geodesic SkipNorm Block:
+
+        f_perp(x) = f(x) - (<f(x), x> / ||x||_2^2) * x
+        y_hat = ((x + f_perp(x)) / ||x + f_perp(x)||_2) * ||x||_2
+
+    Performs a nonlinear state-dependent rotation on the hypersphere of radius ||x||_2:
+    1. Projects velocity f(x) onto the tangent space T_x S^{d-1} (orthogonal to x).
+    2. Projects x + f_perp(x) back onto the sphere of exact radius ||x||_2 via SkipNorm.
+    Conserves ||y_hat||_2 == ||x||_2 to machine precision over infinite rollout steps.
+    """
+
+    def __init__(self, net: nn.Module, step_scale: float = 0.1, eps: float = 1e-8) -> None:
+        super().__init__()
+        self.net = net
+        self.step_scale = nn.Parameter(torch.tensor(float(step_scale)))
+        self.eps = eps
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        v = self.net(x)
+        norm_x_sq = (x * x).sum(dim=-1, keepdim=True) + self.eps
+        # Orthogonal projection onto tangent space T_x S^{d-1}
+        v_perp = v - ((v * x).sum(dim=-1, keepdim=True) / norm_x_sq) * x
+        y = x + self.step_scale * v_perp
+        return skip_norm(x, y, p=2.0, dim=-1, eps=self.eps)
 
 
 class SkipNormRNN(nn.Module):
@@ -201,3 +229,4 @@ class SkipNormRNN(nn.Module):
     def forward(self, x: torch.Tensor, h0: torch.Tensor | None = None) -> torch.Tensor:
         y, _ = self.rnn(x, h0)
         return skip_norm(x, y, p=self.p, dim=-1)
+

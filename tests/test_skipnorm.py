@@ -2,7 +2,7 @@
 
 import torch
 import torch.nn as nn
-from skipnorm import AdaptiveSkipNorm, SkipNorm, SkipNormResBlock, SkipNormRNN, skip_norm
+from skipnorm import AdaptiveSkipNorm, GeodesicSkipNorm, SkipNorm, SkipNormResBlock, SkipNormRNN, skip_norm
 
 
 def test_exact_norm_conservation_across_dimensions():
@@ -45,8 +45,24 @@ def test_scale_equivariance_bias_free():
         assert torch.allclose(out_cx, c_out_x, rtol=1e-6, atol=1e-6)
 
 
+def test_geodesic_skipnorm_long_rollout():
+    torch.manual_seed(3)
+    mlp = nn.Sequential(nn.Linear(16, 32), nn.GELU(), nn.Linear(32, 16))
+    geo = GeodesicSkipNorm(mlp, step_scale=0.2).double()
+    x0 = torch.randn(4, 16, dtype=torch.float64) * 5.5
+    norm0 = torch.linalg.vector_norm(x0, dim=-1)
+    x = x0.clone()
+    with torch.no_grad():
+        for _ in range(500):
+            x = geo(x)
+    norm_final = torch.linalg.vector_norm(x, dim=-1)
+    assert torch.allclose(norm0, norm_final, rtol=1e-12, atol=1e-12)
+
+
 if __name__ == "__main__":
     test_exact_norm_conservation_across_dimensions()
     test_radial_jacobian_isometry_theorem1()
     test_scale_equivariance_bias_free()
+    test_geodesic_skipnorm_long_rollout()
     print("All SkipNorm mathematical property tests passed!")
+

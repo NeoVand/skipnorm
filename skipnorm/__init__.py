@@ -2,6 +2,7 @@
 
 from .layers import (
     AdaptiveSkipNorm,
+    GeodesicSkipNorm,
     SkipNorm,
     SkipNormResBlock,
     SkipNormRNN,
@@ -13,7 +14,9 @@ __all__ = [
     "skip_norm",
     "SkipNorm",
     "AdaptiveSkipNorm",
+    "GeodesicSkipNorm",
     "SkipNormResBlock",
     "SphericalNorm",
     "SkipNormRNN",
 ]
+

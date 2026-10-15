@@ -1,0 +1,65 @@
+{
+  "dnls": {
+    "resnet": {
+      "mse_step_10": 0.13578233122825623,
+      "mse_step_50": 6.455129146575928,
+      "mse_step_200": 676459520.0,
+      "energy_drift_step_100": 4642.0556640625,
+      "energy_drift_step_2000": 1607737933824.0
+    },
+    "linear_unitary": {
+      "mse_step_10": 0.07632908970117569,
+      "mse_step_50": 0.5856126546859741,
+      "mse_step_200": 0.5955638885498047,
+      "energy_drift_step_100": 3.464916517259553e-06,
+      "energy_drift_step_2000": 7.577271026093513e-05
+    },
+    "rmsnorm": {
+      "mse_step_10": 0.46241050958633423,
+      "mse_step_50": 1.1664291620254517,
+      "mse_step_200": 1.3538917303085327,
+      "energy_drift_step_100": 3.3376927375793457,
+      "energy_drift_step_2000": 3.3376922607421875
+    },
+    "pure_skipnorm": {
+      "mse_step_10": 0.13086646795272827,
+      "mse_step_50": 0.503487765789032,
+      "mse_step_200": 0.6582027673721313,
+      "energy_drift_step_100": 6.930731615284458e-07,
+      "energy_drift_step_2000": 2.830168114087428e-06
+    },
+    "geodesic_skipnorm": {
+      "mse_step_10": 0.09875869005918503,
+      "mse_step_50": 0.45227909088134766,
+      "mse_step_200": 0.5685577988624573,
+      "energy_drift_step_100": 5.764318871115393e-07,
+      "energy_drift_step_2000": 2.368177320022369e-06
+    }
+  },
+  "noether": {
+    "resnet": {
+      "raw_euclidean_norm_orbit_cv_pct": 12.64594942331314,
+      "latent_norm_orbit_cv_pct": 22.704511880874634,
+      "invariant_conservation_r2": 0.6333094678248032,
+      "spearman_corr_with_true_H": 0.9965217391304346,
+      "hamiltonian_drift_step_100_pct": 7.651954144239426,
+      "hamiltonian_drift_step_1000_pct": 42.822638154029846
+    },
+    "rmsnorm": {
+      "raw_euclidean_norm_orbit_cv_pct": 12.64594942331314,
+      "latent_norm_orbit_cv_pct": 7.311391085386276,
+      "invariant_conservation_r2": 0.727609983707351,
+      "spearman_corr_with_true_H": 0.9999999999999999,
+      "hamiltonian_drift_step_100_pct": 69.08065676689148,
+      "hamiltonian_drift_step_1000_pct": 101.03557109832764
+    },
+    "geodesic_skipnorm": {
+      "raw_euclidean_norm_orbit_cv_pct": 12.64594942331314,
+      "latent_norm_orbit_cv_pct": 1.2729731388390064,
+      "invariant_conservation_r2": 0.9986556127267795,
+      "spearman_corr_with_true_H": 0.9999999999999999,
+      "hamiltonian_drift_step_100_pct": 3.5732824355363846,
+      "hamiltonian_drift_step_1000_pct": 2.778211236000061
+    }
+  }
+}
