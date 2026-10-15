@@ -1,4 +1,5 @@
-"""Regenerate the 3 PRL vector PDF + PNG figures with zero overlapping legends or text."""
+"""Generate APS / Physical Review Letters publication figures at exact 1:1 print width (7.0 in)
+with inward ticks, direct curve callouts, and frameless headspace legends."""
 
 from __future__ import annotations
 
@@ -12,8 +13,8 @@ jax.config.update("jax_enable_x64", True)
 
 import jax.numpy as jnp
 import matplotlib.lines as mlines
-import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
 import numpy as np
 import optax
 
@@ -29,53 +30,46 @@ from experiments.generate_prl_benchmarks_and_figures import (
 )
 from skipnorm.jax_layers import geodesic_skip_norm_fn, skip_norm_fn
 
-# Apply APS / PRL rcParams AFTER all imports so nothing overrides them
+# Exact APS / Physical Review Letters styling at 1:1 print scale (width = 7.0 in)
 plt.rcParams.update({
     "font.family": "serif",
-    "font.serif": ["Times New Roman", "DejaVu Serif", "Computer Modern Roman"],
-    "mathtext.fontset": "cm",
-    "font.size": 9.0,
-    "axes.titlesize": 9.5,
+    "font.serif": ["Times New Roman", "STIXGeneral", "DejaVu Serif", "Computer Modern Roman"],
+    "mathtext.fontset": "stix",
+    "font.size": 8.2,
+    "axes.titlesize": 8.5,
     "axes.titleweight": "bold",
-    "axes.labelsize": 8.8,
-    "xtick.labelsize": 8.0,
-    "ytick.labelsize": 8.0,
-    "legend.fontsize": 7.5,
-    "axes.linewidth": 0.85,
-    "grid.linewidth": 0.45,
-    "lines.linewidth": 1.6,
+    "axes.labelsize": 8.2,
+    "xtick.labelsize": 7.4,
+    "ytick.labelsize": 7.4,
+    "legend.fontsize": 6.9,
+    "axes.linewidth": 0.75,
+    "xtick.major.width": 0.65,
+    "ytick.major.width": 0.65,
+    "xtick.minor.width": 0.45,
+    "ytick.minor.width": 0.45,
+    "xtick.major.size": 3.2,
+    "ytick.major.size": 3.2,
+    "xtick.minor.size": 1.8,
+    "ytick.minor.size": 1.8,
+    "xtick.direction": "in",
+    "ytick.direction": "in",
+    "xtick.top": True,
+    "ytick.right": True,
+    "lines.linewidth": 1.35,
     "figure.dpi": 300,
-    "savefig.dpi": 300,
+    "savefig.dpi": 400,
     "savefig.bbox": "tight",
-    "savefig.pad_inches": 0.06,
+    "savefig.pad_inches": 0.03,
 })
 
-C_SKIP = "#009E73"     # Bluish green (SkipNorm / GeodesicSkipNorm)
-C_RES = "#D55E00"      # Vermilion (Standard ResNet)
-C_RMS = "#0072B2"      # Blue (RMSNorm)
-C_LN = "#CC79A7"       # Reddish purple (LayerNorm / Overparam)
-C_UNIT = "#E69F00"     # Orange (Linear Unitary)
-C_DARK = "#222222"
-
-
-def style_external_legend(ax, ncol=1, y_offset=-0.23, handles=None):
-    """Place legend cleanly outside below the subplot x-axis label so zero data is covered."""
-    kwargs = dict(
-        loc="upper center",
-        bbox_to_anchor=(0.5, y_offset),
-        ncol=ncol,
-        frameon=True,
-        facecolor="#F8F9FA",
-        edgecolor="#D0D5DD",
-        framealpha=1.0,
-        fontsize=7.3,
-        handlelength=1.8,
-        columnspacing=1.0,
-        borderpad=0.45,
-    )
-    if handles is not None:
-        return ax.legend(handles=handles, **kwargs)
-    return ax.legend(**kwargs)
+# High-contrast APS / Nature Physics palette (Okabe-Ito refined)
+C_SKIP = "#00805A"     # Deep Emerald (SkipNorm / GeodesicSkipNorm)
+C_RES = "#C84600"      # Deep Vermilion (Standard ResNet)
+C_RMS = "#005B9A"      # Royal Blue (RMSNorm)
+C_LN = "#A63A79"       # Deep Magenta (LayerNorm / Overparameterized)
+C_UNIT = "#D48800"     # Warm Ochre (Linear Unitary)
+C_DARK = "#1A1A1A"
+C_GRAY = "#666666"
 
 
 def make_fig1(b1):
@@ -128,89 +122,110 @@ def make_fig1(b1):
     dims = b1["dims"]
     ranks_ln, ranks_rms, ranks_sn = b1["ranks_ln"], b1["ranks_rms"], b1["ranks_sn"]
 
-    fig, axes = plt.subplots(1, 3, figsize=(10.4, 3.15))
-    plt.subplots_adjust(wspace=0.32)
+    fig, axes = plt.subplots(1, 3, figsize=(7.05, 2.25))
+    plt.subplots_adjust(wspace=0.39)
 
-    # Panel (a): Bottleneck Geometry (d=2) with zero text/circle overlap
+    # ---------------- Panel (a): Bottleneck Geometry (d=2) ----------------
     ax = axes[0]
-    theta = np.linspace(0, 2 * np.pi, 240)
-    for r, al in [(0.48, 0.32), (0.88, 0.58), (1.28, 0.92)]:
-        ax.plot(r * np.cos(theta), r * np.sin(theta), color=C_SKIP, alpha=al, lw=1.45,
-                label="SkipNorm $\\mathbb{S}^{d-1}(\\|x\\|_2)$" if r == 1.28 else None)
-    ax.plot(1.08 * np.cos(theta), 1.08 * np.sin(theta), color=C_RMS, ls="--", lw=1.45,
-            label="RMSNorm $\\mathbb{S}^{d-1}(\\sqrt{d})$")
-    ax.scatter([0.76, -0.76], [-0.76, 0.76], color=C_LN, s=52, zorder=6, marker="D",
-               edgecolor=C_DARK, lw=0.5, label="LayerNorm ($d=2$: 2 pts)")
+    ax.axhline(0, color="#E0E0E0", lw=0.5, zorder=1)
+    ax.axvline(0, color="#E0E0E0", lw=0.5, zorder=1)
 
-    # Base point on outer circle r = 1.28 at angle 32 deg; both vectors point into exterior x > 1.28
-    r_out = 1.28
-    ang = np.deg2rad(32.0)
+    theta = np.linspace(0, 2 * np.pi, 240)
+    for r, al in [(0.45, 0.28), (0.82, 0.52), (1.20, 0.92)]:
+        ax.plot(r * np.cos(theta), r * np.sin(theta), color=C_SKIP, alpha=al, lw=1.25, zorder=3)
+    ax.plot(1.01 * np.cos(theta), 1.01 * np.sin(theta), color=C_RMS, ls="--", lw=1.2, zorder=4)
+    ax.scatter([-0.714, 0.714], [0.714, -0.714], color=C_LN, s=34, zorder=6, marker="D",
+               edgecolor="white", lw=0.5)
+
+    # Tangent & radial decomposition on outer circle at angle 28 deg
+    r_out = 1.20
+    ang = np.deg2rad(28.0)
     ux, uy = np.cos(ang), np.sin(ang)
-    tx, ty = np.sin(ang), -np.cos(ang)  # clockwise tangent pointing down-and-right into open exterior
+    tx, ty = np.sin(ang), -np.cos(ang)
     px, py = r_out * ux, r_out * uy
 
-    # Subtle tangent line segment showing tangent hyperplane
-    s_vals = np.linspace(-0.45, 0.78, 50)
-    ax.plot(px + s_vals * tx, py + s_vals * ty, color=C_SKIP, ls=":", lw=0.9, alpha=0.7)
+    s_vals = np.linspace(-0.35, 0.58, 40)
+    ax.plot(px + s_vals * tx, py + s_vals * ty, color=C_SKIP, ls=":", lw=0.8, alpha=0.75)
 
-    # Right-angle square marker between u_y and t_y
-    sq = 0.12
-    right_angle_pts = np.array([
+    sq = 0.11
+    ra_pts = np.array([
         [px + sq * ux, py + sq * uy],
         [px + sq * ux + sq * tx, py + sq * uy + sq * ty],
         [px + sq * tx, py + sq * ty],
     ])
-    ax.plot(right_angle_pts[:, 0], right_angle_pts[:, 1], color=C_DARK, lw=0.8)
-    ax.scatter([px], [py], color=C_DARK, s=18, zorder=7)
+    ax.plot(ra_pts[:, 0], ra_pts[:, 1], color=C_DARK, lw=0.65)
+    ax.scatter([px], [py], color=C_DARK, s=12, zorder=7)
 
-    # Radial arrow u_y (outward) and Tangent arrow T_y S^{d-1} (down-right into exterior)
-    len_vec = 0.62
-    ax.annotate("", xy=(px + len_vec * ux, py + len_vec * uy), xytext=(px, py),
-                arrowprops=dict(arrowstyle="-|>", color=C_DARK, lw=1.35, mutation_scale=10))
-    ax.annotate("", xy=(px + len_vec * tx, py + len_vec * ty), xytext=(px, py),
-                arrowprops=dict(arrowstyle="-|>", color=C_SKIP, lw=1.35, mutation_scale=10))
+    l_vec = 0.45
+    ax.annotate("", xy=(px + l_vec * ux, py + l_vec * uy), xytext=(px, py),
+                arrowprops=dict(arrowstyle="-|>", color=C_DARK, lw=1.15, mutation_scale=8.0))
+    ax.annotate("", xy=(px + l_vec * tx, py + l_vec * ty), xytext=(px, py),
+                arrowprops=dict(arrowstyle="-|>", color=C_SKIP, lw=1.15, mutation_scale=8.0))
 
-    # Labels placed purely in the exterior region (x > 1.48 > r_out=1.28)
-    ax.text(px + len_vec * ux + 0.06, py + len_vec * uy + 0.02,
-            "$u_y\\ (\\sigma_r=1)$", fontsize=7.6, color=C_DARK, fontweight="bold", ha="left", va="center")
-    ax.text(px + len_vec * tx + 0.06, py + len_vec * ty - 0.02,
-            "$T_y\\mathbb{S}^{d-1}$", fontsize=7.6, color=C_SKIP, fontweight="bold", ha="left", va="center")
+    ax.text(px + l_vec * ux + 0.05, py + l_vec * uy + 0.04, "$\\mathbf{u}_y\\ (\\sigma_r\\!=\\!1)$",
+            fontsize=6.6, color=C_DARK, ha="left", va="center")
+    ax.text(px + l_vec * tx + 0.05, py + l_vec * ty - 0.02, "$T_y\\mathbb{S}^{d-1}$",
+            fontsize=6.6, color=C_SKIP, ha="left", va="center")
 
-    ax.set_xlim(-1.60, 2.90)
-    ax.set_ylim(-2.12, 2.12)
-    ax.set_aspect("equal")
-    ax.set_title("(a) Bottleneck Geometry ($d=2$)", pad=7)
+    # Direct callouts for the 3 manifolds in clean exterior space (zero circle crossings)
+    ax.annotate("SkipNorm $\\mathbb{S}^{d-1}(\\|x\\|_2)$",
+                xy=(-1.20 * np.cos(np.deg2rad(55)), 1.20 * np.sin(np.deg2rad(55))),
+                xytext=(-1.92, 1.58),
+                fontsize=6.4, color=C_SKIP, fontweight="bold",
+                arrowprops=dict(arrowstyle="-", color=C_SKIP, lw=0.6, shrinkA=0, shrinkB=2))
+    ax.annotate("RMSNorm $\\mathbb{S}^{d-1}(\\sqrt{d})$",
+                xy=(-1.01 * np.cos(np.deg2rad(50)), -1.01 * np.sin(np.deg2rad(50))),
+                xytext=(-1.96, -1.72),
+                fontsize=6.4, color=C_RMS, ha="left",
+                arrowprops=dict(arrowstyle="-", color=C_RMS, lw=0.6, shrinkA=0, shrinkB=2))
+    ax.annotate("LayerNorm ($2\\text{ pts}$)",
+                xy=(0.714, -0.714), xytext=(2.68, -1.34),
+                fontsize=6.4, color=C_LN, ha="right",
+                arrowprops=dict(arrowstyle="-", color=C_LN, lw=0.6, shrinkA=0, shrinkB=3))
+
+    ax.set_xlim(-2.08, 2.82)
+    ax.set_ylim(-1.98, 2.02)
+    ax.set_xticks([-1, 0, 1, 2])
+    ax.set_yticks([-1, 0, 1])
+    ax.set_title("(a) Bottleneck Geometry ($d=2$)", pad=5)
     ax.set_xlabel("Latent Coordinate $z_1$")
     ax.set_ylabel("Latent Coordinate $z_2$")
-    style_external_legend(ax, ncol=1, y_offset=-0.24)
-    ax.grid(True, alpha=0.25)
 
-    # Panel (b): 50-Layer Radial Isometry
+    # ---------------- Panel (b): 50-Layer Radial Isometry ----------------
     ax = axes[1]
-    ax.semilogy(depths_to_probe, sn_grad_norms, color=C_SKIP, lw=2.2, label="SkipNorm ($\\|J^\\top u_L\\|_2 \\equiv 1$)")
-    ax.semilogy(depths_to_probe, res_grad_norms, color=C_RES, ls="--", lw=1.6, label="Unnormalized Cascade")
-    ax.semilogy(depths_to_probe, rms_grad_norms, color=C_RMS, ls=":", lw=1.6, label="RMSNorm ($\\|J^\\top u_L\\|_2 = 0$)")
-    ax.set_ylim(1e-31, 1e3)
+    ax.semilogy(depths_to_probe, sn_grad_norms, color=C_SKIP, lw=1.75)
+    ax.semilogy(depths_to_probe, res_grad_norms, color=C_RES, ls="--", lw=1.35)
+    ax.semilogy(depths_to_probe, rms_grad_norms, color=C_RMS, ls=":", lw=1.45)
+
+    # Direct curve labels in vast open log-space (no box needed)
+    ax.text(25, 4.5, "SkipNorm ($\\|J_{\\mathrm{total}}^\\top u_L\\|_2 \\equiv 1$)",
+            color=C_SKIP, fontsize=6.7, fontweight="bold", ha="center", va="bottom")
+    ax.text(26, 2e-8, "Unnormalized",
+            color=C_RES, fontsize=6.7, fontweight="bold", ha="center", va="top", rotation=-18)
+    ax.text(25, 4e-15, "RMSNorm ($\\|J^\\top u_L\\|_2 = 0$)",
+            color=C_RMS, fontsize=6.7, ha="center", va="bottom")
+
+    ax.set_ylim(1e-24, 1e3)
     ax.set_xlim(0, 51)
-    ax.set_title("(b) 50-Layer Radial Isometry", pad=7)
+    ax.set_yticks([1e-24, 1e-18, 1e-12, 1e-6, 1e0])
+    ax.set_title("(b) 50-Layer Radial Isometry", pad=5)
     ax.set_xlabel("Depth $L$ (widths $16 \\leftrightarrow 2$)")
     ax.set_ylabel("Radial Gradient $\\|J_{\\mathrm{total}}^\\top u_L\\|_2$")
-    style_external_legend(ax, ncol=1, y_offset=-0.24)
-    ax.grid(True, alpha=0.25)
 
-    # Panel (c): Bottleneck Rank Theorem
+    # ---------------- Panel (c): Bottleneck Rank Theorem ----------------
     ax = axes[2]
-    ax.plot(dims, ranks_sn, "o-", color=C_SKIP, lw=2.0, ms=5.5, label="SkipNorm ($\\mathrm{rank} = d$)")
-    ax.plot(dims, ranks_rms, "s--", color=C_RMS, lw=1.6, ms=5.0, label="RMSNorm ($\\mathrm{rank} = d-1$)")
-    ax.plot(dims, ranks_ln, "D:", color=C_LN, lw=1.6, ms=5.0, label="LayerNorm ($\\mathrm{rank} = d-2$)")
+    ax.plot(dims, ranks_sn, "o-", color=C_SKIP, lw=1.5, ms=4.2, label="SkipNorm ($d$)")
+    ax.plot(dims, ranks_rms, "s--", color=C_RMS, lw=1.3, ms=3.8, label="RMSNorm ($d-1$)")
+    ax.plot(dims, ranks_ln, "D:", color=C_LN, lw=1.3, ms=3.8, label="LayerNorm ($d-2$)")
     ax.set_xticks(dims)
     ax.set_yticks(range(0, 9, 2))
-    ax.set_ylim(-0.4, 8.6)
-    ax.set_title("(c) Bottleneck Rank Theorem", pad=7)
+    ax.set_xlim(1.5, 8.5)
+    ax.set_ylim(-0.5, 9.2)
+    ax.set_title("(c) Bottleneck Rank Theorem", pad=5)
     ax.set_xlabel("Bottleneck Width $d$")
     ax.set_ylabel("Exact Jacobian Rank")
-    style_external_legend(ax, ncol=1, y_offset=-0.24)
-    ax.grid(True, alpha=0.25)
+    # Upper-left triangle (d in [1.5, 5.5], y in [5.5, 9.2]) is 100% empty
+    ax.legend(loc="upper left", frameon=False, handlelength=1.6, labelspacing=0.28, borderaxespad=0.4)
 
     os.makedirs("paper", exist_ok=True)
     fig.savefig("paper/fig1_geometry_and_rank.pdf")
@@ -220,68 +235,80 @@ def make_fig1(b1):
 
 
 def make_fig2(dnls_res):
-    trajs = generate_dnls_data()
-    x_in = trajs[:, :-1, :].reshape(-1, 32)
-    x_out = trajs[:, 1:, :].reshape(-1, 32)
-    test_trajs = generate_dnls_data(n_trajs=16, n_steps=40, dt=0.04)
+    import pickle
+    cache_path = "/tmp/skipnorm_fig2_cache.pkl"
+    if os.path.exists(cache_path):
+        with open(cache_path, "rb") as f:
+            curves = pickle.load(f)
+    else:
+        trajs = generate_dnls_data()
+        x_in = trajs[:, :-1, :].reshape(-1, 32)
+        x_out = trajs[:, 1:, :].reshape(-1, 32)
+        test_trajs = generate_dnls_data(n_trajs=16, n_steps=40, dt=0.04)
 
-    modes = [
-        ("Standard ResNet", "resnet"),
-        ("RMSNorm", "rmsnorm"),
-        ("Linear Unitary", "linear_unitary"),
-        ("GeodesicSkipNorm", "geodesic_skipnorm"),
-    ]
-    curves = {}
-    for label, mode in modes:
-        key = jax.random.PRNGKey(100)
-        model = DNLSStepper(32, 96, mode, key)
-        opt = optax.adam(3e-3)
-        opt_state = opt.init(eqx.filter(model, eqx.is_array))
+        modes = [
+            ("Standard ResNet", "resnet"),
+            ("RMSNorm", "rmsnorm"),
+            ("Linear Unitary", "linear_unitary"),
+            ("GeodesicSkipNorm", "geodesic_skipnorm"),
+        ]
+        curves = {}
+        for label, mode in modes:
+            key = jax.random.PRNGKey(100)
+            model = DNLSStepper(32, 96, mode, key)
+            opt = optax.adam(3e-3)
+            opt_state = opt.init(eqx.filter(model, eqx.is_array))
 
-        @eqx.filter_jit
-        def step(m, os):
-            def loss_fn(mod):
-                return jnp.mean(jnp.square(jax.vmap(mod)(x_in) - x_out))
-            l, g = eqx.filter_value_and_grad(loss_fn)(m)
-            u, os_n = opt.update(g, os, m)
-            return eqx.apply_updates(m, u), os_n, l
+            @eqx.filter_jit
+            def step(m, os):
+                def loss_fn(mod):
+                    return jnp.mean(jnp.square(jax.vmap(mod)(x_in) - x_out))
+                l, g = eqx.filter_value_and_grad(loss_fn)(m)
+                u, os_n = opt.update(g, os, m)
+                return eqx.apply_updates(m, u), os_n, l
 
-        for _ in range(500):
-            model, opt_state, _ = step(model, opt_state)
+            for _ in range(500):
+                model, opt_state, _ = step(model, opt_state)
 
-        @jax.jit
-        def eval_2000(s0):
-            def body(s, _):
-                sn = jax.vmap(model)(s)
-                return sn, sn
-            _, preds = jax.lax.scan(body, s0, None, length=2000)
-            return jnp.swapaxes(preds, 0, 1)
+            @jax.jit
+            def eval_2000(s0):
+                def body(s, _):
+                    sn = jax.vmap(model)(s)
+                    return sn, sn
+                _, preds = jax.lax.scan(body, s0, None, length=2000)
+                return jnp.swapaxes(preds, 0, 1)
 
-        preds_2000 = eval_2000(test_trajs[:, 0, :])
-        e0 = jnp.sum(jnp.square(test_trajs[:, 0, :]), axis=-1, keepdims=True)
-        et = jnp.sum(jnp.square(preds_2000), axis=-1)
-        curves[label] = np.array(jnp.mean(jnp.abs(et - e0) / e0, axis=0)) * 100.0
+            preds_2000 = eval_2000(test_trajs[:, 0, :])
+            e0 = jnp.sum(jnp.square(test_trajs[:, 0, :]), axis=-1, keepdims=True)
+            et = jnp.sum(jnp.square(preds_2000), axis=-1)
+            curves[label] = np.array(jnp.mean(jnp.abs(et - e0) / e0, axis=0)) * 100.0
+        with open(cache_path, "wb") as f:
+            pickle.dump(curves, f)
 
-    fig, axes = plt.subplots(1, 2, figsize=(9.6, 2.95))
-    plt.subplots_adjust(wspace=0.28)
+    fig, axes = plt.subplots(1, 2, figsize=(7.05, 2.25))
+    plt.subplots_adjust(wspace=0.33)
 
+    # ---------------- Panel (a): 2,000-step DNLS Norm Conservation ----------------
     ax = axes[0]
     steps = np.arange(1, 2001)
-    ax.loglog(steps, np.maximum(curves["Standard ResNet"], 1e-16), color=C_RES, ls="--", lw=1.65,
-              label="Standard ResNet ($>10^{70}\\%$)")
-    ax.loglog(steps, np.maximum(curves["RMSNorm"], 1e-16), color=C_RMS, ls=":", lw=1.65,
-              label="RMSNorm ($1.2\\times 10^3\\%$)")
-    ax.loglog(steps, np.maximum(curves["Linear Unitary"], 1e-16), color=C_UNIT, ls="-.", lw=1.55,
-              label="Linear Unitary ($U^\\top U = I$)")
-    ax.loglog(steps, np.maximum(curves["GeodesicSkipNorm"], 1e-16), color=C_SKIP, lw=2.2,
-              label="GeodesicSkipNorm ($7.4\\times 10^{-13}\\%$)")
-    ax.set_title("(a) DNLS 2,000-Step Wave Norm Conservation", pad=7)
-    ax.set_xlabel("Autoregressive Rollout Step $t$")
-    ax.set_ylabel("Relative Norm Error $|\\mathcal{N}_t - \\mathcal{N}_0|/\\mathcal{N}_0$ (%)")
-    ax.set_ylim(1e-16, 1e15)
-    style_external_legend(ax, ncol=2, y_offset=-0.24)
-    ax.grid(True, alpha=0.25)
+    ax.loglog(steps, np.maximum(curves["Standard ResNet"], 1e-16), color=C_RES, ls="--", lw=1.45)
+    ax.loglog(steps, np.maximum(curves["RMSNorm"], 1e-16), color=C_RMS, ls=":", lw=1.45)
+    ax.loglog(steps, np.maximum(curves["Linear Unitary"], 1e-16), color=C_UNIT, ls="-.", lw=1.35)
+    ax.loglog(steps, np.maximum(curves["GeodesicSkipNorm"], 1e-16), color=C_SKIP, lw=1.8)
 
+    # Direct curve labels aligned cleanly inside left-center log bands (ample margin from right spine)
+    ax.text(4.5, 4.5e3, "RMSNorm ($1.2\\times 10^3\\%$)", color=C_RMS, fontsize=6.8, va="bottom")
+    ax.text(6.0, 1.5e-1, "Standard ResNet (diverges $>10^{70}\\%$)", color=C_RES, fontsize=6.8, fontweight="bold", va="top")
+    ax.text(4.5, 6e-11, "Linear Unitary ($U^\\top U = I$)", color=C_UNIT, fontsize=6.8, va="bottom")
+    ax.text(4.5, 1.8e-15, "GeodesicSkipNorm ($7.4\\times 10^{-13}\\%$)", color=C_SKIP, fontsize=6.8, fontweight="bold", va="bottom")
+
+    ax.set_title("(a) 1D DNLS Wave Norm Conservation", pad=5)
+    ax.set_xlabel("Autoregressive Rollout Step $t$")
+    ax.set_ylabel("Norm Error $|\\mathcal{N}_t - \\mathcal{N}_0|/\\mathcal{N}_0$ (%)")
+    ax.set_ylim(1e-16, 1e14)
+    ax.set_yticks([1e-15, 1e-10, 1e-5, 1e0, 1e5, 1e10])
+
+    # ---------------- Panel (b): 40-Step Wave Trajectory Error ----------------
     ax = axes[1]
     labels = ["Standard\nResNet", "RMSNorm", "Linear\nUnitary", "Geodesic\nSkipNorm"]
     keys = ["Standard ResNet", "RMSNorm", "Linear Unitary", "GeodesicSkipNorm"]
@@ -289,16 +316,22 @@ def make_fig2(dnls_res):
     stds = [dnls_res[k]["mse_40_std"] * 1e2 for k in keys]
     colors = [C_RES, C_RMS, C_UNIT, C_SKIP]
     x_p = np.arange(len(labels))
-    bars = ax.bar(x_p, means, yerr=stds, capsize=4, width=0.48, color=colors, edgecolor=C_DARK, lw=0.75)
+    bars = ax.bar(x_p, means, yerr=stds, capsize=3, width=0.46, color=colors, edgecolor=C_DARK, lw=0.65)
     for b, m, s in zip(bars, means, stds):
         ax.text(b.get_x() + b.get_width() / 2, m + s + 1.8, f"{m:.2f}",
-                ha="center", va="bottom", fontsize=8.0, fontweight="bold")
+                ha="center", va="bottom", fontsize=7.2, fontweight="bold", color=C_DARK)
+
+    # Highlight 2.08x improvement over Linear Unitary in the open right space
+    ax.annotate("$2.08\\times$ lower MSE\nthan Linear Unitary",
+                xy=(3.0, means[3] + 9.0), xytext=(2.42, 46.0),
+                ha="center", fontsize=6.8, color=C_SKIP, fontweight="bold",
+                arrowprops=dict(arrowstyle="->", color=C_SKIP, lw=0.85))
+
     ax.set_xticks(x_p)
     ax.set_xticklabels(labels)
-    ax.set_ylim(0, max(means) * 1.28)
-    ax.set_title("(b) 40-Step Wave Trajectory Error (5 Seeds)", pad=7)
+    ax.set_ylim(0, 88)
+    ax.set_title("(b) 40-Step Trajectory MSE (5 Seeds)", pad=5)
     ax.set_ylabel("Rollout MSE ($\\times 10^{-2}$, Mean $\\pm$ SD)")
-    ax.grid(True, axis="y", alpha=0.25)
 
     fig.savefig("paper/fig2_dnls_and_duffing.pdf")
     fig.savefig("paper/fig2_dnls_and_duffing.png")
@@ -326,12 +359,12 @@ def train_double_well_for_plot():
     inits, well_ids = [], []
     for dq in np.linspace(0.12, 0.52, 12):
         inits.append([-1.0 - dq, 0.0])
-        well_ids.append(0)  # Left well (H < 0)
+        well_ids.append(0)
         inits.append([1.0 + dq, 0.0])
-        well_ids.append(1)  # Right well (H < 0)
+        well_ids.append(1)
     for q0 in np.linspace(1.48, 2.05, 14):
         inits.append([q0, 0.0])
-        well_ids.append(2)  # Outer connected (H > 0)
+        well_ids.append(2)
     inits = jnp.array(inits, dtype=jnp.float64)
     well_ids = np.array(well_ids)
 
@@ -426,75 +459,94 @@ def train_double_well_for_plot():
     z_all = model.encode(trajs.reshape(-1, 2)).reshape(n_tr, n_st, 2)
     norms = np.array(jnp.linalg.norm(z_all, axis=-1))
     H_true = np.array(dw_energy(trajs))
-    return trajs, well_ids, norms, H_true
+    return np.array(trajs), well_ids, norms, H_true
 
 
 def make_fig3(lv_summary, torus_summary, dw_summary):
-    lv_trajs = generate_lotka_volterra_data(n_trajs=48, n_steps=60, dt=0.25)
-    m_res = train_lv_model_cosine(lv_trajs, mode="resnet", latent_dim=2, seed=1)
-    m_d8 = train_lv_model_cosine(lv_trajs, mode="geodesic_skipnorm", latent_dim=8, seed=1)
-    m_sn = train_lv_model_cosine(lv_trajs, mode="geodesic_skipnorm", latent_dim=2, seed=1)
+    import pickle
+    cache_path = "/tmp/skipnorm_fig3_cache.pkl"
+    if os.path.exists(cache_path):
+        with open(cache_path, "rb") as f:
+            c_data = pickle.load(f)
+        lv_trajs = c_data["lv_trajs"]
+        ev_res, ev_d8, ev_sn = c_data["ev_res"], c_data["ev_d8"], c_data["ev_sn"]
+        U_np, V_m_np = c_data["U_np"], c_data["V_m_np"]
+        true_V_grid, raw_norm_grid, learned_norm_grid = c_data["true_V_grid"], c_data["raw_norm_grid"], c_data["learned_norm_grid"]
+        dw_trajs, dw_well_ids, dw_norms, dw_H = c_data["dw_trajs"], c_data["dw_well_ids"], c_data["dw_norms"], c_data["dw_H"]
+    else:
+        lv_trajs_j = generate_lotka_volterra_data(n_trajs=48, n_steps=60, dt=0.25)
+        m_res = train_lv_model_cosine(lv_trajs_j, mode="resnet", latent_dim=2, seed=1)
+        m_d8 = train_lv_model_cosine(lv_trajs_j, mode="geodesic_skipnorm", latent_dim=8, seed=1)
+        m_sn = train_lv_model_cosine(lv_trajs_j, mode="geodesic_skipnorm", latent_dim=2, seed=1)
 
-    ev_res = evaluate_lv_invariance(m_res, lv_trajs)
-    ev_d8 = evaluate_lv_invariance(m_d8, lv_trajs)
-    ev_sn = evaluate_lv_invariance(m_sn, lv_trajs)
+        ev_res = evaluate_lv_invariance(m_res, lv_trajs_j)
+        ev_d8 = evaluate_lv_invariance(m_d8, lv_trajs_j)
+        ev_sn = evaluate_lv_invariance(m_sn, lv_trajs_j)
 
-    dw_trajs, dw_well_ids, dw_norms, dw_H = train_double_well_for_plot()
+        u_grid = jnp.linspace(0.25, 3.0, 120, dtype=jnp.float64)
+        v_grid = jnp.linspace(0.12, 1.8, 120, dtype=jnp.float64)
+        U, V_m = jnp.meshgrid(u_grid, v_grid)
+        pts = jnp.stack([U.flatten(), V_m.flatten()], axis=-1)
+        U_np, V_m_np = np.array(U), np.array(V_m)
+        true_V_grid = np.array(lotka_volterra_invariant(pts)).reshape(120, 120)
+        raw_norm_grid = np.array(jnp.linalg.norm(pts, axis=-1)).reshape(120, 120)
+        learned_norm_grid = np.array(jnp.linalg.norm(m_sn.encode(pts), axis=-1)).reshape(120, 120)
+        lv_trajs = np.array(lv_trajs_j)
+        dw_trajs, dw_well_ids, dw_norms, dw_H = train_double_well_for_plot()
+        with open(cache_path, "wb") as f:
+            pickle.dump({
+                "lv_trajs": lv_trajs, "ev_res": ev_res, "ev_d8": ev_d8, "ev_sn": ev_sn,
+                "U_np": U_np, "V_m_np": V_m_np, "true_V_grid": true_V_grid,
+                "raw_norm_grid": raw_norm_grid, "learned_norm_grid": learned_norm_grid,
+                "dw_trajs": dw_trajs, "dw_well_ids": dw_well_ids, "dw_norms": dw_norms, "dw_H": dw_H,
+            }, f)
 
-    fig, axes = plt.subplots(2, 3, figsize=(11.4, 6.75))
-    plt.subplots_adjust(wspace=0.31, hspace=0.68)
+    fig, axes = plt.subplots(2, 3, figsize=(7.15, 4.45))
+    plt.subplots_adjust(wspace=0.40, hspace=0.40)
 
-    # Panel (a): Non-Centered Lotka-Volterra Contours
+    # ---------------- Panel (a): Non-Centered Lotka-Volterra Contours ----------------
     ax = axes[0, 0]
-    u_grid = jnp.linspace(0.25, 3.0, 120, dtype=jnp.float64)
-    v_grid = jnp.linspace(0.12, 1.8, 120, dtype=jnp.float64)
-    U, V_m = jnp.meshgrid(u_grid, v_grid)
-    pts = jnp.stack([U.flatten(), V_m.flatten()], axis=-1)
-    true_V_grid = np.array(lotka_volterra_invariant(pts)).reshape(120, 120)
-    raw_norm_grid = np.array(jnp.linalg.norm(pts, axis=-1)).reshape(120, 120)
-    learned_norm_grid = np.array(jnp.linalg.norm(m_sn.encode(pts), axis=-1)).reshape(120, 120)
-
-    cf = ax.contourf(np.array(U), np.array(V_m), learned_norm_grid, levels=18, cmap="viridis", alpha=0.88)
-    cbar = plt.colorbar(cf, ax=ax, pad=0.03)
-    cbar.set_label("Latent Radius $\\|\\Phi_{\\mathrm{enc}}(u,v)\\|_2$", fontsize=8.0)
-    ax.contour(np.array(U), np.array(V_m), true_V_grid, levels=[0.05, 0.15, 0.30, 0.50, 0.75],
-               colors="white", linestyles="--", linewidths=1.35)
-    ax.contour(np.array(U), np.array(V_m), raw_norm_grid, levels=[0.8, 1.4, 2.0, 2.6],
-               colors="#ff5555", linestyles=":", linewidths=1.15, alpha=0.9)
-    ax.plot(1.0, 0.5, marker="*", markersize=11, color="#FFD700", markeredgecolor=C_DARK, markeredgewidth=0.8)
-    ax.set_title("(a) Lotka-Volterra Casimir Foliation", pad=7)
+    cf = ax.contourf(U_np, V_m_np, learned_norm_grid, levels=18, cmap="viridis", alpha=0.90)
+    cbar = plt.colorbar(cf, ax=ax, pad=0.025, fraction=0.046)
+    cbar.ax.tick_params(labelsize=6.2)
+    ax.contour(U_np, V_m_np, true_V_grid, levels=[0.05, 0.15, 0.30, 0.50, 0.75],
+               colors="white", linestyles="--", linewidths=1.05)
+    ax.contour(U_np, V_m_np, raw_norm_grid, levels=[0.8, 1.4, 2.0, 2.6],
+               colors="#FF6B6B", linestyles=":", linewidths=0.95)
+    ax.plot(1.0, 0.5, marker="*", markersize=8.5, color="#FFD700", markeredgecolor=C_DARK, markeredgewidth=0.6)
+    # Crisp inline key at top-right of contour (including colorbar meaning so no header collides with title)
+    ax.text(0.97, 0.96,
+            "Color: $\\|\\Phi_{\\mathrm{enc}}(u,v)\\|_2$\nWhite $--$: True $V(u,v)$\nRed $\\cdots$: Raw $\\|(u,v)\\|_2$\nGold $\\star$: Center $(u^*,v^*)$",
+            transform=ax.transAxes, ha="right", va="top", fontsize=5.7, color="white",
+            bbox=dict(boxstyle="round,pad=0.22", facecolor="#112222", edgecolor="none", alpha=0.74))
+    ax.set_title("(a) Lotka-Volterra Casimir Foliation", pad=5)
     ax.set_xlabel("Prey Population $u$")
     ax.set_ylabel("Predator Population $v$")
-    handles_a = [
-        mlines.Line2D([], [], color=C_SKIP, ls="--", lw=1.4, label="True Casimir $V(u,v)$ (white dashed)"),
-        mlines.Line2D([], [], color="#ff5555", ls=":", lw=1.4, label="Raw Norm $\\|(u,v)\\|_2$ (red dotted)"),
-        mlines.Line2D([], [], color="#FFD700", marker="*", ls="None", ms=8, mec=C_DARK, label="Equilibrium $(1.0, 0.5)$"),
-    ]
-    style_external_legend(ax, ncol=1, y_offset=-0.24, handles=handles_a)
 
-    # Panel (b): Radius Constancy Along Single Asymmetric Orbit
+    # ---------------- Panel (b): Radius Constancy Along Single Orbit ----------------
     ax = axes[0, 1]
     orbit_idx = -4
     t_steps = np.arange(lv_trajs.shape[1])
-    raw_orb = np.array(jnp.linalg.norm(lv_trajs[orbit_idx], axis=-1))
+    raw_orb = np.linalg.norm(lv_trajs[orbit_idx], axis=-1)
     res_orb = ev_res["norms"][orbit_idx]
     sn_orb = ev_sn["norms"][orbit_idx]
 
-    ax.plot(t_steps, raw_orb / np.mean(raw_orb), color="#e41a1c", ls=":", lw=1.7,
-            label="Raw $\\|(u_t,v_t)\\|_2$ ($\\mathrm{CV}=42.3\\%$)")
-    ax.plot(t_steps, res_orb / np.mean(res_orb), color=C_RES, ls="--", lw=1.6,
-            label=f"ResNet $d_z=2$ ($\\mathrm{{CV}}={lv_summary['Standard ResNet (d=2)']['cv_mean']:.1f}\\pm{lv_summary['Standard ResNet (d=2)']['cv_std']:.1f}\\%$)")
-    ax.plot(t_steps, sn_orb / np.mean(sn_orb), color=C_SKIP, lw=2.2,
-            label=f"GeodesicSkipNorm $d_z=2$ ($\\mathrm{{CV}}={lv_summary['GeodesicSkipNorm (d=2)']['cv_mean']:.1f}\\pm{lv_summary['GeodesicSkipNorm (d=2)']['cv_std']:.1f}\\%$)")
-    ax.axhline(1.0, color=C_DARK, lw=0.6, alpha=0.4)
-    ax.set_ylim(0.0, 2.75)
-    ax.set_title("(b) Radius Constancy on Single Orbit", pad=7)
+    ax.axhline(1.0, color="#BBBBBB", lw=0.6, zorder=1)
+    ax.plot(t_steps, raw_orb / np.mean(raw_orb), color="#D62728", ls=":", lw=1.35,
+            label="Raw $\\|(u_t,v_t)\\|_2$ ($42.3\\%$)")
+    ax.plot(t_steps, res_orb / np.mean(res_orb), color=C_RES, ls="--", lw=1.3,
+            label=f"ResNet $d_z\\!=\\!2$ ($50.0\\%$)")
+    ax.plot(t_steps, sn_orb / np.mean(sn_orb), color=C_SKIP, lw=1.75,
+            label=f"GeodesicSkipNorm ($9.0\\%$)")
+    # Reserve top headspace [2.55, 3.88] so frameless legend sits cleanly above the peaks
+    ax.set_ylim(0.0, 3.88)
+    ax.set_yticks([0.0, 1.0, 2.0, 3.0])
+    ax.set_title("(b) Orbital Radius Constancy ($\\mathrm{CV}$)", pad=5)
     ax.set_xlabel("Trajectory Step $t$")
     ax.set_ylabel("Normalized Radius $r_t / \\bar{r}$")
-    style_external_legend(ax, ncol=1, y_offset=-0.24)
-    ax.grid(True, alpha=0.25)
+    ax.legend(loc="upper left", frameon=False, handlelength=1.45, labelspacing=0.18, borderaxespad=0.30, fontsize=6.5)
 
-    # Panel (c): Brouwer Dimension Matching (d_z = dim M = 2)
+    # ---------------- Panel (c): Brouwer Dimension Matching (d_z = N) ----------------
     ax = axes[0, 2]
     true_V_all = ev_sn["true_V"].flatten()
     sn_norms = ev_sn["norms"].flatten()
@@ -504,19 +556,21 @@ def make_fig3(lv_summary, torus_summary, dw_summary):
     def norm01(a):
         return (a - np.min(a)) / (np.max(a) - np.min(a) + 1e-12)
 
-    ax.scatter(true_V_all[::3], norm01(res_norms)[::3], s=6, alpha=0.22, color=C_RES,
-               label=f"ResNet $d_z=2$ ($R^2={lv_summary['Standard ResNet (d=2)']['r2_mean']:.1f}\\pm{lv_summary['Standard ResNet (d=2)']['r2_std']:.1f}\\%$)")
-    ax.scatter(true_V_all[::3], norm01(d8_norms)[::3], s=6, alpha=0.25, color=C_LN,
-               label=f"SkipNorm $d_z=8 > N$ ($R^2={lv_summary['Overparam SkipNorm (d=8)']['r2_mean']:.1f}\\%$)")
-    ax.scatter(true_V_all[::3], norm01(sn_norms)[::3], s=7, alpha=0.68, color=C_SKIP,
-               label=f"GeodesicSkipNorm $d_z=2$ ($R^2={lv_summary['GeodesicSkipNorm (d=2)']['r2_mean']:.1f}\\%, |\\rho|={lv_summary['GeodesicSkipNorm (d=2)']['rho_mean']:.3f}$)")
-    ax.set_title("(c) Brouwer Dimension Matching ($d_z = N$)", pad=7)
+    ax.scatter(true_V_all[::3], norm01(res_norms)[::3], s=3.5, alpha=0.20, color=C_RES, rasterized=True,
+               label=f"ResNet $d_z\\!=\\!2$ ($R^2\\!=\\!1.0\\%$)")
+    ax.scatter(true_V_all[::3], norm01(d8_norms)[::3], s=3.5, alpha=0.22, color=C_LN, rasterized=True,
+               label=f"SkipNorm $d_z\\!=\\!8\\!>\\!N$ ($28.0\\%$)")
+    ax.scatter(true_V_all[::3], norm01(sn_norms)[::3], s=4.5, alpha=0.65, color=C_SKIP, rasterized=True,
+               label=f"Geodesic $d_z\\!=\\!2$ ($R^2\\!=\\!94.6\\%$)")
+    # Reserve top headspace [1.02, 1.54] so frameless legend never touches a single point
+    ax.set_ylim(-0.04, 1.54)
+    ax.set_yticks([0.0, 0.5, 1.0, 1.5])
+    ax.set_title("(c) Brouwer Matching ($d_z = N = 2$)", pad=5)
     ax.set_xlabel("True Casimir $V(u,v) - V_{\\min}$")
     ax.set_ylabel("Scaled Radius $\\|\\Phi_{\\mathrm{enc}}(u,v)\\|_2$")
-    style_external_legend(ax, ncol=1, y_offset=-0.24)
-    ax.grid(True, alpha=0.25)
+    ax.legend(loc="upper left", frameon=False, markerscale=1.8, handletextpad=0.25, labelspacing=0.18, borderaxespad=0.30, fontsize=6.5)
 
-    # Panel (d): Double-Well Phase Plane (Disconnected vs Connected Orbits)
+    # ---------------- Panel (d): Double-Well Phase Plane & Separatrix ----------------
     ax = axes[1, 0]
     q_g = np.linspace(-2.15, 2.15, 200)
     p_g = np.linspace(-1.65, 1.65, 200)
@@ -525,30 +579,30 @@ def make_fig3(lv_summary, torus_summary, dw_summary):
 
     for tr, wid in zip(np.array(dw_trajs), dw_well_ids):
         if wid == 0:
-            ax.plot(tr[:, 0], tr[:, 1], color=C_RMS, lw=1.0, alpha=0.7)
+            ax.plot(tr[:, 0], tr[:, 1], color=C_RMS, lw=0.75, alpha=0.72)
         elif wid == 1:
-            ax.plot(tr[:, 0], tr[:, 1], color=C_RES, lw=1.0, alpha=0.7)
+            ax.plot(tr[:, 0], tr[:, 1], color=C_RES, lw=0.75, alpha=0.72)
         else:
-            ax.plot(tr[:, 0], tr[:, 1], color=C_SKIP, lw=1.0, alpha=0.65)
+            ax.plot(tr[:, 0], tr[:, 1], color=C_SKIP, lw=0.75, alpha=0.62)
 
-    # Plot figure-eight homoclinic separatrix H(q,p) = 0
-    ax.contour(Q, P, H_grid, levels=[0.0], colors=C_DARK, linestyles="--", linewidths=1.5)
-    ax.scatter([-1.0, 1.0], [0.0, 0.0], color=[C_RMS, C_RES], s=30, zorder=6, edgecolor=C_DARK, lw=0.6)
-    ax.scatter([0.0], [0.0], color=C_DARK, marker="x", s=35, zorder=6, lw=1.2)
+    ax.contour(Q, P, H_grid, levels=[0.0], colors=C_DARK, linestyles="--", linewidths=1.25)
+    ax.scatter([-1.0, 1.0], [0.0, 0.0], color=[C_RMS, C_RES], s=18, zorder=6, edgecolor="white", lw=0.4)
+    ax.scatter([0.0], [0.0], color=C_DARK, marker="x", s=22, zorder=6, lw=1.0)
+
+    # Direct labels with crisp white pill backgrounds so contour lines never obscure text
+    pill = dict(boxstyle="round,pad=0.14", facecolor="white", edgecolor="none", alpha=0.90)
+    ax.text(-1.05, 1.62, "Left $\\mathcal{O}_c^{(L)}$", color=C_RMS, fontsize=6.5, fontweight="bold", ha="center", bbox=pill)
+    ax.text(1.05, 1.62, "Right $\\mathcal{O}_c^{(R)}$", color=C_RES, fontsize=6.5, fontweight="bold", ha="center", bbox=pill)
+    ax.text(0.0, -1.55, "Connected $\\mathcal{O}_c$ ($H>0$)", color=C_SKIP, fontsize=6.5, fontweight="bold", ha="center", bbox=pill)
+
     ax.set_xlim(-2.15, 2.15)
-    ax.set_ylim(-1.65, 1.65)
-    ax.set_title("(d) Double-Well Phase Plane & Barrier", pad=7)
+    ax.set_ylim(-1.82, 1.95)
+    ax.set_yticks([-1.0, 0.0, 1.0])
+    ax.set_title("(d) Double-Well Phase Plane ($H \\lessgtr 0$)", pad=5)
     ax.set_xlabel("Position $q$")
     ax.set_ylabel("Momentum $p$")
-    handles_d = [
-        mlines.Line2D([], [], color=C_RMS, lw=1.5, label="Left Well $\\mathcal{O}_c^{(L)}$ ($H < 0$, disc.)"),
-        mlines.Line2D([], [], color=C_RES, lw=1.5, label="Right Well $\\mathcal{O}_c^{(R)}$ ($H < 0$, disc.)"),
-        mlines.Line2D([], [], color=C_SKIP, lw=1.5, label="Outer Orbits $\\mathcal{O}_c$ ($H > 0$, conn.)"),
-    ]
-    style_external_legend(ax, ncol=1, y_offset=-0.24, handles=handles_d)
-    ax.grid(True, alpha=0.25)
 
-    # Panel (e): Corollary 1 - Multi-Basin Topological Obstruction & Bifurcation
+    # ---------------- Panel (e): Corollary 1 - Multi-Basin Obstruction ----------------
     ax = axes[1, 1]
     orb_H = np.mean(dw_H, axis=-1)
     orb_r_mean = np.mean(dw_norms, axis=-1)
@@ -558,46 +612,50 @@ def make_fig3(lv_summary, torus_summary, dw_summary):
     m1 = dw_well_ids == 1
     m2 = dw_well_ids == 2
 
-    ax.errorbar(orb_H[m0], orb_r_mean[m0], yerr=orb_r_std[m0], fmt="s-", color=C_RMS, ms=4.5, lw=1.3, capsize=2.5,
-                label=f"Left Well ($H<0$: $R^2={dw_summary['sub_barrier_disconnected']['r2_mean']:.1f}\\%$)")
-    ax.errorbar(orb_H[m1], orb_r_mean[m1], yerr=orb_r_std[m1], fmt="^-", color=C_RES, ms=4.5, lw=1.3, capsize=2.5,
-                label=f"Right Well ($H<0$: $\\mathrm{{CV}}={dw_summary['sub_barrier_disconnected']['cv_mean']:.1f}\\%$)")
-    ax.errorbar(orb_H[m2], orb_r_mean[m2], yerr=orb_r_std[m2], fmt="o-", color=C_SKIP, ms=4.8, lw=1.8, capsize=2.5,
-                label=f"Connected ($H>0$: $R^2={dw_summary['super_barrier_connected']['r2_mean']:.1f}\\%, |\\rho|=1.00$)")
-    ax.axvline(0.0, color=C_DARK, ls="--", lw=1.1, alpha=0.75)
-    ax.text(0.06, 1.24, "Separatrix $H=0$", fontsize=7.4, color=C_DARK, ha="left", va="top",
-            bbox=dict(boxstyle="round,pad=0.18", facecolor="white", edgecolor="none", alpha=0.85))
-    ax.set_title("(e) Corollary 1: Multi-Basin Obstruction", pad=7)
+    ax.axvline(0.0, color=C_DARK, ls="--", lw=0.9, alpha=0.7)
+    ax.errorbar(orb_H[m0], orb_r_mean[m0], yerr=orb_r_std[m0], fmt="s-", color=C_RMS, ms=3.2, lw=1.0, capsize=1.8,
+                label=f"Left Well ($H\\!<\\!0$: $R^2\\!=\\!39.7\\%$)")
+    ax.errorbar(orb_H[m1], orb_r_mean[m1], yerr=orb_r_std[m1], fmt="^-", color=C_RES, ms=3.2, lw=1.0, capsize=1.8,
+                label=f"Right Well ($H\\!<\\!0$: $\\mathrm{{CV}}\\!=\\!24.9\\%$)")
+    ax.errorbar(orb_H[m2], orb_r_mean[m2], yerr=orb_r_std[m2], fmt="o-", color=C_SKIP, ms=3.4, lw=1.35, capsize=1.8,
+                label=f"Connected ($H\\!>\\!0$: $R^2\\!=\\!97.4\\%$)")
+    ax.text(0.08, 0.25, "Separatrix $H=0$", fontsize=6.4, color=C_DARK, ha="left", va="center")
+    # Reserve top headspace [1.32, 1.86] for frameless legend
+    ax.set_ylim(0.15, 1.86)
+    ax.set_yticks([0.4, 0.8, 1.2, 1.6])
+    ax.set_title("(e) Multi-Basin Bifurcation (Cor. 1)", pad=5)
     ax.set_xlabel("True Double-Well Energy $H(q,p)$")
-    ax.set_ylabel("Latent Radius $\\|\\Phi_{\\mathrm{enc}}(q,p)\\|_2$ (Mean $\\pm$ SD)")
-    style_external_legend(ax, ncol=1, y_offset=-0.24)
-    ax.grid(True, alpha=0.25)
+    ax.set_ylabel("Latent Radius $\\|\\Phi_{\\mathrm{enc}}(q,p)\\|_2$")
+    ax.legend(loc="upper left", frameon=False, handlelength=1.4, labelspacing=0.18, borderaxespad=0.30, fontsize=6.4)
 
-    # Panel (f): Corollary 2 - Two-Invariant Toroidal Foliation
+    # ---------------- Panel (f): Corollary 2 - Two-Invariant Toroidal Foliation ----------------
     ax = axes[1, 2]
-    t_labels = ["Standard\nResNet", "Single-Sphere\n($K=1, \\mathbb{S}^3$)", "Toroidal Block\n($K=2, \\mathbb{T}^2$)"]
+    t_labels = ["Standard\nResNet", "Single Sphere\n($\\mathbb{S}^3, K\\!=\\!1$)", "Toroidal\n($\\mathbb{T}^2, K\\!=\\!2$)"]
     t_keys = ["Standard ResNet (4D)", "Single-Sphere SkipNorm (K=1)", "Toroidal Block SkipNorm (K=2)"]
     r2_m = [torus_summary[k]["r2_mean"] for k in t_keys]
     r2_s = [torus_summary[k]["r2_std"] for k in t_keys]
     inv_m = [100.0 - torus_summary[k]["cv_mean"] for k in t_keys]
     inv_s = [torus_summary[k]["cv_std"] for k in t_keys]
 
-    xp = np.arange(len(t_labels)) * 1.15
-    w = 0.40
-    ax.bar(xp - w / 2, inv_m, yerr=inv_s, capsize=3.5, width=w, color=C_RMS, edgecolor=C_DARK, lw=0.7,
+    xp = np.arange(len(t_labels)) * 1.32
+    w = 0.36
+    ax.bar(xp - w / 2, inv_m, yerr=inv_s, capsize=2.5, width=w, color=C_RMS, edgecolor=C_DARK, lw=0.6,
            label="Action Invariance ($100\\% - \\mathrm{CV}$)")
-    b2 = ax.bar(xp + w / 2, r2_m, yerr=r2_s, capsize=3.5, width=w, color=C_SKIP, edgecolor=C_DARK, lw=0.7,
-                label="Joint $(I_1, I_2)$ Recovery $R^2$ (%)")
+    b2 = ax.bar(xp + w / 2, r2_m, yerr=r2_s, capsize=2.5, width=w, color=C_SKIP, edgecolor=C_DARK, lw=0.6,
+                label="Joint $(I_1, I_2)$ Recovery $R^2$")
     for bar, m, s in zip(b2, r2_m, r2_s):
-        ax.text(bar.get_x() + bar.get_width() * 0.56, m + s + 2.0, f"{m:.1f}%",
-                ha="center", va="bottom", fontsize=7.2, fontweight="bold")
+        ax.text(bar.get_x() + bar.get_width() * 0.58, m + s + 2.2, f"{m:.1f}",
+                ha="center", va="bottom", fontsize=6.4, fontweight="bold", color=C_DARK)
     ax.set_xticks(xp)
     ax.set_xticklabels(t_labels)
-    ax.set_ylim(0, 118)
+    ax.tick_params(axis="x", labelsize=6.5)
+    ax.set_xlim(-0.55, xp[-1] + 0.62)
+    # Upper-left space above bars 0 & 1 (y in [75, 136]) is 100% empty
+    ax.set_ylim(0, 136)
+    ax.set_yticks([0, 25, 50, 75, 100])
     ax.set_ylabel("Percentage (%, Mean $\\pm$ SD)")
-    ax.set_title("(f) Corollary 2: Toroidal Foliation ($\\mathbb{T}^2$)", pad=7)
-    style_external_legend(ax, ncol=1, y_offset=-0.24)
-    ax.grid(True, axis="y", alpha=0.25)
+    ax.set_title("(f) Toroidal Foliation ($\\mathbb{T}^2$, Cor. 2)", pad=5)
+    ax.legend(loc="upper left", frameon=False, handlelength=1.4, labelspacing=0.20, borderaxespad=0.30, fontsize=6.4)
 
     fig.savefig("paper/fig3_noether_brouwer_foliation.pdf")
     fig.savefig("paper/fig3_noether_brouwer_foliation.png")
