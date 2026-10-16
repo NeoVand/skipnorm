@@ -1,7 +1,7 @@
 [project]
 name = "skipnorm"
 version = "0.1.0"
-description = "Add your description here"
+description = "Conditional radial foliation in norm-preserving dynamical autoencoders"
 requires-python = ">=3.13"
 dependencies = [
     "equinox>=0.13.8",

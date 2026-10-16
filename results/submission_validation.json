@@ -1,0 +1,384 @@
+{
+  "datasets": {
+    "lotka_volterra": {
+      "sha256": "aeea833ff1fe0692fc34f55e00bda7cc8563f639cf4fd5fb6b2fb7a485b8d1f8",
+      "shapes": {
+        "train": [
+          32,
+          180,
+          2
+        ],
+        "validation": [
+          8,
+          180,
+          2
+        ],
+        "test": [
+          16,
+          180,
+          2
+        ]
+      },
+      "meta": {
+        "dt": 0.05,
+        "T_steps": 180,
+        "substeps": 10,
+        "n_train": 32,
+        "n_val": 8,
+        "n_test": 16
+      },
+      "split_checks": {
+        "train_validation": {
+          "exact_initial_state_duplicates": 0,
+          "minimum_initial_state_distance": 0.009489999134572269
+        },
+        "train_test": {
+          "exact_initial_state_duplicates": 0,
+          "minimum_initial_state_distance": 0.010319814914762748
+        },
+        "validation_test": {
+          "exact_initial_state_duplicates": 0,
+          "minimum_initial_state_distance": 0.009617604672304214
+        }
+      },
+      "exact_train_test_invariant_duplicates": 0,
+      "train_invariant_range": [
+        [
+          0.08
+        ],
+        [
+          1.4
+        ]
+      ],
+      "test_invariant_range": [
+        [
+          0.104
+        ],
+        [
+          1.232
+        ]
+      ]
+    },
+    "double_well_balanced": {
+      "sha256": "3f717bb330456a668bb9b3ea40e44dc40bc2bd6c1c2bb683beb5bd1dfb8c5738",
+      "shapes": {
+        "train": [
+          32,
+          120,
+          2
+        ],
+        "validation": [
+          8,
+          120,
+          2
+        ],
+        "test": [
+          16,
+          120,
+          2
+        ]
+      },
+      "meta": {
+        "gamma": 0.0,
+        "regime": "balanced_50_50",
+        "dt": 0.05,
+        "T_steps": 120
+      },
+      "split_checks": {
+        "train_validation": {
+          "exact_initial_state_duplicates": 0,
+          "minimum_initial_state_distance": 0.019401150956507962
+        },
+        "train_test": {
+          "exact_initial_state_duplicates": 0,
+          "minimum_initial_state_distance": 0.019248947221971457
+        },
+        "validation_test": {
+          "exact_initial_state_duplicates": 0,
+          "minimum_initial_state_distance": 0.021872348351002935
+        }
+      },
+      "exact_train_test_invariant_duplicates": 8,
+      "exact_train_test_energy_well_duplicates": 0,
+      "train_invariant_range": [
+        [
+          -0.23
+        ],
+        [
+          -0.03
+        ]
+      ],
+      "test_invariant_range": [
+        [
+          -0.2151851851851852
+        ],
+        [
+          -0.03740740740740742
+        ]
+      ]
+    },
+    "double_well_imbalanced": {
+      "sha256": "09fd2e58072d2bc9f0d9eba64b169455d3ac9436c1350d6918c02260f278ca68",
+      "shapes": {
+        "train": [
+          30,
+          120,
+          2
+        ],
+        "validation": [
+          8,
+          120,
+          2
+        ],
+        "test": [
+          16,
+          120,
+          2
+        ]
+      },
+      "meta": {
+        "gamma": 0.0,
+        "regime": "imbalanced_80_20",
+        "dt": 0.05,
+        "T_steps": 120
+      },
+      "split_checks": {
+        "train_validation": {
+          "exact_initial_state_duplicates": 0,
+          "minimum_initial_state_distance": 0.015302521868967356
+        },
+        "train_test": {
+          "exact_initial_state_duplicates": 0,
+          "minimum_initial_state_distance": 0.01485031431111239
+        },
+        "validation_test": {
+          "exact_initial_state_duplicates": 0,
+          "minimum_initial_state_distance": 0.015487960312649374
+        }
+      },
+      "exact_train_test_invariant_duplicates": 2,
+      "exact_train_test_energy_well_duplicates": 0,
+      "train_invariant_range": [
+        [
+          -0.23
+        ],
+        [
+          -0.03
+        ]
+      ],
+      "test_invariant_range": [
+        [
+          -0.23
+        ],
+        [
+          -0.03
+        ]
+      ]
+    },
+    "double_well_tilted": {
+      "sha256": "8d349aad3f723d6b3b03bca6fbdf2c0d6275101f09a70db595e6f3b53e940c09",
+      "shapes": {
+        "train": [
+          32,
+          120,
+          2
+        ],
+        "validation": [
+          8,
+          120,
+          2
+        ],
+        "test": [
+          16,
+          120,
+          2
+        ]
+      },
+      "meta": {
+        "gamma": 0.08,
+        "regime": "tilted_asymmetric",
+        "dt": 0.05,
+        "T_steps": 120
+      },
+      "split_checks": {
+        "train_validation": {
+          "exact_initial_state_duplicates": 0,
+          "minimum_initial_state_distance": 0.015274879186057855
+        },
+        "train_test": {
+          "exact_initial_state_duplicates": 0,
+          "minimum_initial_state_distance": 0.015182260774226575
+        },
+        "validation_test": {
+          "exact_initial_state_duplicates": 0,
+          "minimum_initial_state_distance": 0.015392178901306286
+        }
+      },
+      "exact_train_test_invariant_duplicates": 0,
+      "exact_train_test_energy_well_duplicates": 0,
+      "train_invariant_range": [
+        [
+          -0.2693553048529457
+        ],
+        [
+          -0.02678962635075216
+        ]
+      ],
+      "test_invariant_range": [
+        [
+          -0.30099430639671004
+        ],
+        [
+          -0.036040004651038404
+        ]
+      ]
+    },
+    "coupled_torus_4d": {
+      "sha256": "aa076d92d9e88f6ac101c857e4fbe2011eab3d7a75b9df01a2274fc603ccfb66",
+      "shapes": {
+        "train": [
+          44,
+          120,
+          4
+        ],
+        "validation": [
+          8,
+          120,
+          4
+        ],
+        "test": [
+          20,
+          120,
+          4
+        ]
+      },
+      "meta": {
+        "dt": 0.08,
+        "T_steps": 120,
+        "K": 2,
+        "n_train": 44,
+        "n_val": 8,
+        "n_test": 20
+      },
+      "split_checks": {
+        "train_validation": {
+          "exact_initial_state_duplicates": 0,
+          "minimum_initial_state_distance": 0.25444013829338463
+        },
+        "train_test": {
+          "exact_initial_state_duplicates": 0,
+          "minimum_initial_state_distance": 0.20567672674220874
+        },
+        "validation_test": {
+          "exact_initial_state_duplicates": 0,
+          "minimum_initial_state_distance": 0.40239237462101163
+        }
+      },
+      "exact_train_test_invariant_duplicates": 0,
+      "train_invariant_range": [
+        [
+          0.2813810304706466,
+          0.2970281974578182
+        ],
+        [
+          1.4560467011340594,
+          1.4888381535859956
+        ]
+      ],
+      "test_invariant_range": [
+        [
+          0.26134808814106947,
+          0.35080287645095304
+        ],
+        [
+          1.3675576144649801,
+          1.473071523438094
+        ]
+      ]
+    },
+    "dnls_1d": {
+      "sha256": "17394ed7b789c0fc6b7379daf7cead1d1d7b957f267fd78528ef3e5e8a8cb983",
+      "shapes": {
+        "train": [
+          28,
+          60,
+          32
+        ],
+        "validation": [
+          8,
+          60,
+          32
+        ],
+        "test": [
+          12,
+          250,
+          32
+        ]
+      },
+      "meta": {
+        "S_sites": 16,
+        "state_dim": 32,
+        "dt": 0.04,
+        "substeps": 10,
+        "post_step_projection": false,
+        "max_intrinsic_rk4_relative_norm_drift": 1.3233943893095684e-11,
+        "n_train": 28,
+        "n_val": 8,
+        "n_test": 12
+      },
+      "split_checks": {
+        "train_validation": {
+          "exact_initial_state_duplicates": 0,
+          "minimum_initial_state_distance": 0.07941175252354248
+        },
+        "train_test": {
+          "exact_initial_state_duplicates": 0,
+          "minimum_initial_state_distance": 0.3087401047830499
+        },
+        "validation_test": {
+          "exact_initial_state_duplicates": 0,
+          "minimum_initial_state_distance": 0.3800143780872961
+        }
+      },
+      "exact_train_test_invariant_duplicates": 0,
+      "train_invariant_range": [
+        [
+          0.9616078741827767
+        ],
+        [
+          3.4038841976241785
+        ]
+      ],
+      "test_invariant_range": [
+        [
+          0.982903009230917
+        ],
+        [
+          2.8257741490699653
+        ]
+      ]
+    }
+  },
+  "dnls_reference": {
+    "trajectories": 48,
+    "states": 250,
+    "steps": 249,
+    "dt": 0.04,
+    "physical_horizon": 9.96,
+    "substeps": [
+      10,
+      20,
+      40
+    ],
+    "post_step_projection": false,
+    "max_absolute_state_difference_10_vs_20": 5.703926220235189e-10,
+    "max_absolute_state_difference_20_vs_40": 3.594474717871776e-11,
+    "observed_refinement_ratio": 15.86859462907109,
+    "state_mse_10_vs_40": 6.018008466866843e-22,
+    "max_absolute_difference_from_locked_arrays": 1.9984014443252818e-15,
+    "max_relative_power_drift_10": 1.323290114210195e-11,
+    "max_relative_power_drift_20": 8.288566961439901e-13,
+    "max_relative_power_drift_40": 4.9055001054433484e-14
+  },
+  "source_sha256": "99641d8be0a4c333b89bc56a7f8c16c100e5868fcddf9a49305018795b66f7ef"
+}

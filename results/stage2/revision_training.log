@@ -1,0 +1,274 @@
+[Stage 2] lotka_volterra
+  train lotka_volterra geodesic_bijective seed=0 steps=1200
+  trained in 18.6s; checkpoint saved
+  LV Geodesic SkipNorm (Bijective) seed=0: CV=0.0085 R2=0.9999 MSE=0.000383459
+  train lotka_volterra geodesic_bijective seed=1 steps=1200
+  trained in 18.9s; checkpoint saved
+  LV Geodesic SkipNorm (Bijective) seed=1: CV=0.0130 R2=1.0000 MSE=0.00109852
+  train lotka_volterra geodesic_bijective seed=2 steps=1200
+  trained in 18.5s; checkpoint saved
+  LV Geodesic SkipNorm (Bijective) seed=2: CV=0.0138 R2=0.9999 MSE=0.00169683
+  train lotka_volterra geodesic_bijective seed=3 steps=1200
+  trained in 17.0s; checkpoint saved
+  LV Geodesic SkipNorm (Bijective) seed=3: CV=0.0102 R2=0.9999 MSE=0.000846964
+  train lotka_volterra geodesic_bijective seed=4 steps=1200
+  trained in 17.7s; checkpoint saved
+  LV Geodesic SkipNorm (Bijective) seed=4: CV=0.0219 R2=1.0000 MSE=0.00104665
+  train lotka_volterra geodesic_mlp seed=0 steps=1200
+  trained in 3.5s; checkpoint saved
+  LV Geodesic SkipNorm (MLP) seed=0: CV=0.0252 R2=1.0000 MSE=0.00252091
+  train lotka_volterra geodesic_mlp seed=1 steps=1200
+  trained in 3.1s; checkpoint saved
+  LV Geodesic SkipNorm (MLP) seed=1: CV=0.0309 R2=1.0000 MSE=0.00292528
+  train lotka_volterra geodesic_mlp seed=2 steps=1200
+  trained in 3.2s; checkpoint saved
+  LV Geodesic SkipNorm (MLP) seed=2: CV=0.0237 R2=1.0000 MSE=0.00258419
+  train lotka_volterra geodesic_mlp seed=3 steps=1200
+  trained in 3.2s; checkpoint saved
+  LV Geodesic SkipNorm (MLP) seed=3: CV=0.0243 R2=1.0000 MSE=0.00161348
+  train lotka_volterra geodesic_mlp seed=4 steps=1200
+  trained in 3.0s; checkpoint saved
+  LV Geodesic SkipNorm (MLP) seed=4: CV=0.0284 R2=1.0000 MSE=0.00426953
+  train lotka_volterra projected_residual seed=0 steps=1200
+  trained in 3.1s; checkpoint saved
+  LV Projected Residual SkipNorm seed=0: CV=0.0156 R2=1.0000 MSE=0.000251997
+  train lotka_volterra projected_residual seed=1 steps=1200
+  trained in 3.0s; checkpoint saved
+  LV Projected Residual SkipNorm seed=1: CV=0.0147 R2=1.0000 MSE=0.000280891
+  train lotka_volterra projected_residual seed=2 steps=1200
+  trained in 2.9s; checkpoint saved
+  LV Projected Residual SkipNorm seed=2: CV=0.0139 R2=1.0000 MSE=0.000242672
+  train lotka_volterra projected_residual seed=3 steps=1200
+  trained in 2.9s; checkpoint saved
+  LV Projected Residual SkipNorm seed=3: CV=0.0141 R2=1.0000 MSE=0.000154466
+  train lotka_volterra projected_residual seed=4 steps=1200
+  trained in 3.0s; checkpoint saved
+  LV Projected Residual SkipNorm seed=4: CV=0.0157 R2=1.0000 MSE=0.000329366
+  train lotka_volterra state_dep_so2 seed=0 steps=1200
+  trained in 3.4s; checkpoint saved
+  LV State-Dependent SO(2) seed=0: CV=0.0148 R2=1.0000 MSE=0.00023089
+  train lotka_volterra state_dep_so2 seed=1 steps=1200
+  trained in 3.4s; checkpoint saved
+  LV State-Dependent SO(2) seed=1: CV=0.0132 R2=1.0000 MSE=0.000131076
+  train lotka_volterra state_dep_so2 seed=2 steps=1200
+  trained in 3.6s; checkpoint saved
+  LV State-Dependent SO(2) seed=2: CV=0.0143 R2=1.0000 MSE=0.0001558
+  train lotka_volterra state_dep_so2 seed=3 steps=1200
+  trained in 3.4s; checkpoint saved
+  LV State-Dependent SO(2) seed=3: CV=0.0125 R2=1.0000 MSE=0.000232773
+  train lotka_volterra state_dep_so2 seed=4 steps=1200
+  trained in 3.5s; checkpoint saved
+  LV State-Dependent SO(2) seed=4: CV=0.0156 R2=1.0000 MSE=0.000218963
+  train lotka_volterra projected_invariant seed=0 steps=1200
+  trained in 4.3s; checkpoint saved
+  LV Projected-Invariant Baseline (COMET-inspired) seed=0: CV=0.3648 R2=1.0000 MSE=0.161999
+  train lotka_volterra projected_invariant seed=1 steps=1200
+  trained in 4.3s; checkpoint saved
+  LV Projected-Invariant Baseline (COMET-inspired) seed=1: CV=0.0362 R2=1.0000 MSE=0.00122529
+  train lotka_volterra projected_invariant seed=2 steps=1200
+  trained in 4.3s; checkpoint saved
+  LV Projected-Invariant Baseline (COMET-inspired) seed=2: CV=0.3765 R2=0.9998 MSE=0.0913304
+  train lotka_volterra projected_invariant seed=3 steps=1200
+  trained in 4.4s; checkpoint saved
+  LV Projected-Invariant Baseline (COMET-inspired) seed=3: CV=0.2051 R2=1.0000 MSE=0.0294383
+  train lotka_volterra projected_invariant seed=4 steps=1200
+  trained in 4.4s; checkpoint saved
+  LV Projected-Invariant Baseline (COMET-inspired) seed=4: CV=0.4109 R2=0.9993 MSE=0.544421
+  train lotka_volterra unconstrained seed=0 steps=1200
+  trained in 2.7s; checkpoint saved
+  LV Unconstrained AE seed=0: CV=0.1505 R2=1.0000 MSE=0.000200525
+  train lotka_volterra unconstrained seed=1 steps=1200
+  trained in 2.7s; checkpoint saved
+  LV Unconstrained AE seed=1: CV=0.1518 R2=1.0000 MSE=0.000157845
+  train lotka_volterra unconstrained seed=2 steps=1200
+  trained in 2.6s; checkpoint saved
+  LV Unconstrained AE seed=2: CV=0.1464 R2=1.0000 MSE=0.000214146
+  train lotka_volterra unconstrained seed=3 steps=1200
+  trained in 2.7s; checkpoint saved
+  LV Unconstrained AE seed=3: CV=0.1568 R2=1.0000 MSE=0.000277766
+  train lotka_volterra unconstrained seed=4 steps=1200
+  trained in 2.7s; checkpoint saved
+  LV Unconstrained AE seed=4: CV=0.1641 R2=1.0000 MSE=0.000227977
+[Stage 2] double_well
+  train balanced_50_50 geodesic_bijective seed=0 steps=1000
+  trained in 15.0s; checkpoint saved
+  DW balanced_50_50 geodesic_bijective seed=0: CV=0.2735 globalR2=0.8530 probe=0.625
+  train balanced_50_50 geodesic_bijective seed=1 steps=1000
+  trained in 15.0s; checkpoint saved
+  DW balanced_50_50 geodesic_bijective seed=1: CV=0.2661 globalR2=0.9856 probe=0.562
+  train balanced_50_50 geodesic_bijective seed=2 steps=1000
+  trained in 15.1s; checkpoint saved
+  DW balanced_50_50 geodesic_bijective seed=2: CV=0.3098 globalR2=0.9803 probe=0.562
+  train balanced_50_50 geodesic_bijective seed=3 steps=1000
+  trained in 15.3s; checkpoint saved
+  DW balanced_50_50 geodesic_bijective seed=3: CV=0.3013 globalR2=0.7543 probe=0.625
+  train balanced_50_50 geodesic_bijective seed=4 steps=1000
+  trained in 15.0s; checkpoint saved
+  DW balanced_50_50 geodesic_bijective seed=4: CV=0.2564 globalR2=0.4886 probe=0.625
+  train balanced_50_50 geodesic_folding_mlp seed=0 steps=1000
+  trained in 3.2s; checkpoint saved
+  DW balanced_50_50 geodesic_folding_mlp seed=0: CV=0.0815 globalR2=1.0000 probe=0.500
+  train balanced_50_50 geodesic_folding_mlp seed=1 steps=1000
+  trained in 3.0s; checkpoint saved
+  DW balanced_50_50 geodesic_folding_mlp seed=1: CV=0.0837 globalR2=1.0000 probe=0.500
+  train balanced_50_50 geodesic_folding_mlp seed=2 steps=1000
+  trained in 3.0s; checkpoint saved
+  DW balanced_50_50 geodesic_folding_mlp seed=2: CV=0.0825 globalR2=1.0000 probe=0.500
+  train balanced_50_50 geodesic_folding_mlp seed=3 steps=1000
+  trained in 3.2s; checkpoint saved
+  DW balanced_50_50 geodesic_folding_mlp seed=3: CV=0.0772 globalR2=1.0000 probe=0.500
+  train balanced_50_50 geodesic_folding_mlp seed=4 steps=1000
+  trained in 3.1s; checkpoint saved
+  DW balanced_50_50 geodesic_folding_mlp seed=4: CV=0.0811 globalR2=1.0000 probe=0.500
+  train balanced_50_50 geodesic_bijective_free seed=0 steps=1000
+  trained in 14.4s; checkpoint saved
+  DW balanced_50_50 geodesic_bijective_free seed=0: CV=0.0527 globalR2=-0.0812 probe=1.000
+  train balanced_50_50 geodesic_bijective_free seed=1 steps=1000
+  trained in 13.3s; checkpoint saved
+  DW balanced_50_50 geodesic_bijective_free seed=1: CV=0.0608 globalR2=-0.0769 probe=1.000
+  train balanced_50_50 geodesic_bijective_free seed=2 steps=1000
+  trained in 13.0s; checkpoint saved
+  DW balanced_50_50 geodesic_bijective_free seed=2: CV=0.0449 globalR2=0.6971 probe=0.750
+  train balanced_50_50 geodesic_bijective_free seed=3 steps=1000
+  trained in 13.1s; checkpoint saved
+  DW balanced_50_50 geodesic_bijective_free seed=3: CV=0.2267 globalR2=0.9991 probe=0.500
+  train balanced_50_50 geodesic_bijective_free seed=4 steps=1000
+  trained in 13.4s; checkpoint saved
+  DW balanced_50_50 geodesic_bijective_free seed=4: CV=0.2064 globalR2=0.1357 probe=0.812
+  train imbalanced_80_20 geodesic_bijective seed=0 steps=1000
+  trained in 13.8s; checkpoint saved
+  DW imbalanced_80_20 geodesic_bijective seed=0: CV=0.2865 globalR2=0.7510 probe=0.500
+  train imbalanced_80_20 geodesic_bijective seed=1 steps=1000
+  trained in 13.8s; checkpoint saved
+  DW imbalanced_80_20 geodesic_bijective seed=1: CV=0.2967 globalR2=0.4574 probe=0.500
+  train imbalanced_80_20 geodesic_bijective seed=2 steps=1000
+  trained in 13.9s; checkpoint saved
+  DW imbalanced_80_20 geodesic_bijective seed=2: CV=0.2640 globalR2=0.7040 probe=0.500
+  train imbalanced_80_20 geodesic_bijective seed=3 steps=1000
+  trained in 13.9s; checkpoint saved
+  DW imbalanced_80_20 geodesic_bijective seed=3: CV=0.2554 globalR2=0.5130 probe=0.812
+  train imbalanced_80_20 geodesic_bijective seed=4 steps=1000
+  trained in 13.9s; checkpoint saved
+  DW imbalanced_80_20 geodesic_bijective seed=4: CV=0.2558 globalR2=0.7931 probe=0.500
+  train imbalanced_80_20 geodesic_folding_mlp seed=0 steps=1000
+  trained in 2.8s; checkpoint saved
+  DW imbalanced_80_20 geodesic_folding_mlp seed=0: CV=0.1007 globalR2=1.0000 probe=0.500
+  train imbalanced_80_20 geodesic_folding_mlp seed=1 steps=1000
+  trained in 2.8s; checkpoint saved
+  DW imbalanced_80_20 geodesic_folding_mlp seed=1: CV=0.1133 globalR2=1.0000 probe=0.500
+  train imbalanced_80_20 geodesic_folding_mlp seed=2 steps=1000
+  trained in 2.8s; checkpoint saved
+  DW imbalanced_80_20 geodesic_folding_mlp seed=2: CV=0.1080 globalR2=1.0000 probe=0.500
+  train imbalanced_80_20 geodesic_folding_mlp seed=3 steps=1000
+  trained in 2.9s; checkpoint saved
+  DW imbalanced_80_20 geodesic_folding_mlp seed=3: CV=0.1011 globalR2=1.0000 probe=0.500
+  train imbalanced_80_20 geodesic_folding_mlp seed=4 steps=1000
+  trained in 2.8s; checkpoint saved
+  DW imbalanced_80_20 geodesic_folding_mlp seed=4: CV=0.1027 globalR2=1.0000 probe=0.500
+  train imbalanced_80_20 geodesic_bijective_free seed=0 steps=1000
+  trained in 12.9s; checkpoint saved
+  DW imbalanced_80_20 geodesic_bijective_free seed=0: CV=0.1620 globalR2=-1.3242 probe=1.000
+  train imbalanced_80_20 geodesic_bijective_free seed=1 steps=1000
+  trained in 13.0s; checkpoint saved
+  DW imbalanced_80_20 geodesic_bijective_free seed=1: CV=0.0820 globalR2=-0.8517 probe=0.938
+  train imbalanced_80_20 geodesic_bijective_free seed=2 steps=1000
+  trained in 13.3s; checkpoint saved
+  DW imbalanced_80_20 geodesic_bijective_free seed=2: CV=0.2124 globalR2=0.5846 probe=0.500
+  train imbalanced_80_20 geodesic_bijective_free seed=3 steps=1000
+  trained in 13.0s; checkpoint saved
+  DW imbalanced_80_20 geodesic_bijective_free seed=3: CV=0.2291 globalR2=0.8665 probe=0.500
+  train imbalanced_80_20 geodesic_bijective_free seed=4 steps=1000
+  trained in 13.2s; checkpoint saved
+  DW imbalanced_80_20 geodesic_bijective_free seed=4: CV=0.1312 globalR2=-1.1361 probe=1.000
+  train tilted_gamma_008 geodesic_bijective seed=0 steps=1000
+  trained in 14.1s; checkpoint saved
+  DW tilted_gamma_008 geodesic_bijective seed=0: CV=0.2462 globalR2=0.0284 probe=0.438
+  train tilted_gamma_008 geodesic_bijective seed=1 steps=1000
+  trained in 13.9s; checkpoint saved
+  DW tilted_gamma_008 geodesic_bijective seed=1: CV=0.2407 globalR2=0.3057 probe=0.375
+  train tilted_gamma_008 geodesic_bijective seed=2 steps=1000
+  trained in 13.9s; checkpoint saved
+  DW tilted_gamma_008 geodesic_bijective seed=2: CV=0.1780 globalR2=0.5235 probe=0.375
+  train tilted_gamma_008 geodesic_bijective seed=3 steps=1000
+  trained in 14.1s; checkpoint saved
+  DW tilted_gamma_008 geodesic_bijective seed=3: CV=0.2452 globalR2=0.2567 probe=0.375
+  train tilted_gamma_008 geodesic_bijective seed=4 steps=1000
+  trained in 16.0s; checkpoint saved
+  DW tilted_gamma_008 geodesic_bijective seed=4: CV=0.2217 globalR2=0.8979 probe=0.250
+  train tilted_gamma_008 geodesic_bijective_free seed=0 steps=1000
+  trained in 13.7s; checkpoint saved
+  DW tilted_gamma_008 geodesic_bijective_free seed=0: CV=0.0431 globalR2=0.1102 probe=1.000
+  train tilted_gamma_008 geodesic_bijective_free seed=1 steps=1000
+  trained in 13.7s; checkpoint saved
+  DW tilted_gamma_008 geodesic_bijective_free seed=1: CV=0.0477 globalR2=0.0406 probe=1.000
+  train tilted_gamma_008 geodesic_bijective_free seed=2 steps=1000
+  trained in 13.9s; checkpoint saved
+  DW tilted_gamma_008 geodesic_bijective_free seed=2: CV=0.1046 globalR2=0.1011 probe=1.000
+  train tilted_gamma_008 geodesic_bijective_free seed=3 steps=1000
+  trained in 14.0s; checkpoint saved
+  DW tilted_gamma_008 geodesic_bijective_free seed=3: CV=0.0610 globalR2=0.2838 probe=1.000
+  train tilted_gamma_008 geodesic_bijective_free seed=4 steps=1000
+  trained in 13.9s; checkpoint saved
+  DW tilted_gamma_008 geodesic_bijective_free seed=4: CV=0.0512 globalR2=0.6260 probe=1.000
+[Stage 2] coupled_torus_4d
+  train coupled_torus_4d block_geodesic seed=0 steps=1400
+  trained in 4.7s; checkpoint saved
+  Torus block_geodesic seed=0: CV=0.0180 scalarR2=0.1159 twoR2=0.9993
+  train coupled_torus_4d block_geodesic seed=1 steps=1400
+  trained in 4.3s; checkpoint saved
+  Torus block_geodesic seed=1: CV=0.0203 scalarR2=0.1347 twoR2=0.9992
+  train coupled_torus_4d block_geodesic seed=2 steps=1400
+  trained in 4.4s; checkpoint saved
+  Torus block_geodesic seed=2: CV=0.0170 scalarR2=0.1572 twoR2=0.9994
+  train coupled_torus_4d block_geodesic seed=3 steps=1400
+  trained in 4.5s; checkpoint saved
+  Torus block_geodesic seed=3: CV=0.0185 scalarR2=0.1179 twoR2=0.9995
+  train coupled_torus_4d block_geodesic seed=4 steps=1400
+  trained in 4.7s; checkpoint saved
+  Torus block_geodesic seed=4: CV=0.0195 scalarR2=0.1609 twoR2=0.9993
+  train coupled_torus_4d block_geodesic_general seed=0 steps=1400
+  trained in 4.4s; checkpoint saved
+  Torus block_geodesic_general seed=0: CV=0.0875 scalarR2=0.1271 twoR2=0.9023
+  train coupled_torus_4d block_geodesic_general seed=1 steps=1400
+  trained in 4.3s; checkpoint saved
+  Torus block_geodesic_general seed=1: CV=0.2246 scalarR2=-0.1093 twoR2=0.1225
+  train coupled_torus_4d block_geodesic_general seed=2 steps=1400
+  trained in 4.5s; checkpoint saved
+  Torus block_geodesic_general seed=2: CV=0.3333 scalarR2=-0.1023 twoR2=-0.0177
+  train coupled_torus_4d block_geodesic_general seed=3 steps=1400
+  trained in 4.3s; checkpoint saved
+  Torus block_geodesic_general seed=3: CV=0.3790 scalarR2=0.0606 twoR2=0.1723
+  train coupled_torus_4d block_geodesic_general seed=4 steps=1400
+  trained in 4.5s; checkpoint saved
+  Torus block_geodesic_general seed=4: CV=0.3243 scalarR2=0.0178 twoR2=0.3440
+  train coupled_torus_4d geodesic_mlp seed=0 steps=1400
+  trained in 4.4s; checkpoint saved
+  Torus geodesic_mlp seed=0: CV=0.3151 scalarR2=0.1588 twoR2=0.1052
+  train coupled_torus_4d geodesic_mlp seed=1 steps=1400
+  trained in 6.4s; checkpoint saved
+  Torus geodesic_mlp seed=1: CV=0.3803 scalarR2=0.1647 twoR2=0.5714
+  train coupled_torus_4d geodesic_mlp seed=2 steps=1400
+  trained in 6.3s; checkpoint saved
+  Torus geodesic_mlp seed=2: CV=0.2992 scalarR2=0.2006 twoR2=0.2590
+  train coupled_torus_4d geodesic_mlp seed=3 steps=1400
+  trained in 5.2s; checkpoint saved
+  Torus geodesic_mlp seed=3: CV=0.2451 scalarR2=0.1906 twoR2=0.7816
+  train coupled_torus_4d geodesic_mlp seed=4 steps=1400
+  trained in 5.4s; checkpoint saved
+  Torus geodesic_mlp seed=4: CV=0.3668 scalarR2=0.1602 twoR2=0.8822
+  train coupled_torus_4d unconstrained seed=0 steps=1400
+  trained in 4.9s; checkpoint saved
+  Torus unconstrained seed=0: CV=0.3447 scalarR2=0.1450 twoR2=0.6601
+  train coupled_torus_4d unconstrained seed=1 steps=1400
+  trained in 5.0s; checkpoint saved
+  Torus unconstrained seed=1: CV=0.3328 scalarR2=0.1614 twoR2=0.1867
+  train coupled_torus_4d unconstrained seed=2 steps=1400
+  trained in 4.8s; checkpoint saved
+  Torus unconstrained seed=2: CV=0.4214 scalarR2=0.1716 twoR2=0.4960
+  train coupled_torus_4d unconstrained seed=3 steps=1400
+  trained in 4.6s; checkpoint saved
+  Torus unconstrained seed=3: CV=0.3282 scalarR2=0.1618 twoR2=0.1490
+  train coupled_torus_4d unconstrained seed=4 steps=1400
+  trained in 5.6s; checkpoint saved
+  Torus unconstrained seed=4: CV=0.3375 scalarR2=0.1551 twoR2=0.1397
+[Stage 2] Saved /Users/neo/repos/skipnorm/results/stage2/stage2_results.json

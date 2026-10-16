@@ -1,0 +1,83 @@
+{
+  "protocol": "one midpoint-RK2 step of dt=.15 per .15 outer transition",
+  "reason_for_archive": "Use three .05 RK2 substeps to preserve original integration resolution at the same physical horizon; architecture and training loss unchanged. Coarse-step test results were observed before this numerical-consistency correction.",
+  "summary": {
+    "seeds": [
+      {
+        "seed": 0,
+        "rollout_mse_20": 0.16199915681338434,
+        "rollout_mse": 0.16199915681338434,
+        "physical_eval_horizon": 1.8,
+        "mean_cv": 0.3647776907839064,
+        "ovr": 0.6584833587547422,
+        "ovr_status": "valid",
+        "isotonic_r2": 0.9999691673747607,
+        "spearman_abs_rho": 1.0,
+        "artifact_directory": "results/stage2/runs/lotka_volterra/projected_invariant_seed0_432a8b270116ef4d"
+      },
+      {
+        "seed": 1,
+        "rollout_mse_20": 0.0012252891845063298,
+        "rollout_mse": 0.0012252891845063298,
+        "physical_eval_horizon": 1.8,
+        "mean_cv": 0.03624389339904083,
+        "ovr": 0.006370841344478701,
+        "ovr_status": "valid",
+        "isotonic_r2": 0.9999927693505811,
+        "spearman_abs_rho": 1.0,
+        "artifact_directory": "results/stage2/runs/lotka_volterra/projected_invariant_seed1_c5c0dada7894e826"
+      },
+      {
+        "seed": 2,
+        "rollout_mse_20": 0.09133035035217668,
+        "rollout_mse": 0.09133035035217668,
+        "physical_eval_horizon": 1.8,
+        "mean_cv": 0.37648614033568284,
+        "ovr": 0.7644269204709904,
+        "ovr_status": "valid",
+        "isotonic_r2": 0.9997658558795441,
+        "spearman_abs_rho": 1.0,
+        "artifact_directory": "results/stage2/runs/lotka_volterra/projected_invariant_seed2_4696ac27a8892c8a"
+      },
+      {
+        "seed": 3,
+        "rollout_mse_20": 0.029438345339504457,
+        "rollout_mse": 0.029438345339504457,
+        "physical_eval_horizon": 1.8,
+        "mean_cv": 0.2050570542198485,
+        "ovr": 0.19271061070281367,
+        "ovr_status": "valid",
+        "isotonic_r2": 0.9999585438216093,
+        "spearman_abs_rho": 1.0,
+        "artifact_directory": "results/stage2/runs/lotka_volterra/projected_invariant_seed3_b1bec1ed575cce3b"
+      },
+      {
+        "seed": 4,
+        "rollout_mse_20": 0.5444206037933685,
+        "rollout_mse": 0.5444206037933685,
+        "physical_eval_horizon": 1.8,
+        "mean_cv": 0.41093578321808794,
+        "ovr": 0.8935525478469097,
+        "ovr_status": "valid",
+        "isotonic_r2": 0.9992786485933106,
+        "spearman_abs_rho": 1.0,
+        "artifact_directory": "results/stage2/runs/lotka_volterra/projected_invariant_seed4_a5fcc4e5747e77b8"
+      }
+    ],
+    "rollout_mse_20_mean": 0.16568274909658806,
+    "rollout_mse_20_std": 0.22056348536608095,
+    "rollout_mse_20_valid_seeds": 5,
+    "mean_cv_mean": 0.2787001123913133,
+    "mean_cv_std": 0.15705576043793465,
+    "mean_cv_valid_seeds": 5,
+    "ovr_mean": 0.5031088558239869,
+    "ovr_std": 0.38339612977822096,
+    "ovr_valid_seeds": 5,
+    "isotonic_r2_mean": 0.9997929970039612,
+    "isotonic_r2_std": 0.0003015135432399732,
+    "isotonic_r2_valid_seeds": 5,
+    "spearman_abs_rho_mean": 1.0,
+    "spearman_abs_rho_std": 0.0,
+    "spearman_abs_rho_valid_seeds": 5
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "mse_1": 2.097924053049562e-14,
+  "mse_20": 3.1886209559859732e-12,
+  "mse_50": 2.6371914073854192e-11,
+  "mse_200": 9.383381806598337e-09,
+  "mse_249": 1.553269350981111e-08,
+  "max_relative_power_drift": 1.461199149346461e-14,
+  "mean_final_relative_power_drift": 9.480483407521993e-15,
+  "rollout_ms": 1.8557709991000593,
+  "timing_samples_ms": [
+    1.9823750481009483,
+    1.9053749274462461,
+    1.8863329896703362,
+    1.9117080373689532,
+    1.8620420014485717,
+    1.8489580834284425,
+    1.8494999967515469,
+    1.8334999913349748,
+    1.8142919288948178,
+    1.8234580056741834
+  ],
+  "n_parameters": 0,
+  "mean_final_relative_energy_drift": 0.0003265015536699917,
+  "one_step_jacobian": {
+    "finite_fraction": 1.0,
+    "minimum_singular_value": 0.9650194596554533,
+    "maximum_singular_value": 1.036248533637898,
+    "maximum_condition_number": 1.0738110234666935,
+    "minimum_log_abs_det": 1.863093013199091e-15,
+    "maximum_log_abs_det": 4.265685027426969e-15,
+    "minimum_determinant_sign": 1.0
+  },
+  "mean_symplectic_defect": 3.8065166961142554e-16,
+  "relative_phase_equivariance_error": 4.327766500143377e-16,
+  "origin_jacobian": {
+    "finite_fraction": 1.0,
+    "minimum_singular_value": 0.9999999999999993,
+    "maximum_singular_value": 1.0000000000000009,
+    "maximum_condition_number": 1.0000000000000016,
+    "minimum_log_abs_det": 5.213711407048294e-15,
+    "maximum_log_abs_det": 5.213711407048294e-15,
+    "minimum_determinant_sign": 1.0
+  },
+  "repeated_time_step_jacobian": {
+    "1": {
+      "finite_fraction": 1.0,
+      "minimum_singular_value": 0.9801472150117225,
+      "maximum_singular_value": 1.0202549011864916,
+      "maximum_condition_number": 1.040920063395058,
+      "minimum_log_abs_det": 2.869232629265639e-15,
+      "maximum_log_abs_det": 3.599551212651875e-15,
+      "minimum_determinant_sign": 1.0
+    },
+    "10": {
+      "finite_fraction": 1.0,
+      "minimum_singular_value": 0.8270334110121539,
+      "maximum_singular_value": 1.2091409931990116,
+      "maximum_condition_number": 1.462021941434289,
+      "minimum_log_abs_det": 6.772360450213455e-15,
+      "maximum_log_abs_det": 9.658940314238862e-15,
+      "minimum_determinant_sign": 1.0
+    },
+    "50": {
+      "finite_fraction": 1.0,
+      "minimum_singular_value": 0.43820334724733173,
+      "maximum_singular_value": 2.282045553238499,
+      "maximum_condition_number": 5.207731907055611,
+      "minimum_log_abs_det": 3.4638958368304884e-14,
+      "maximum_log_abs_det": 3.8413716652030416e-14,
+      "minimum_determinant_sign": 1.0
+    },
+    "200": {
+      "finite_fraction": 1.0,
+      "minimum_singular_value": 0.10833870321638636,
+      "maximum_singular_value": 9.230311701282787,
+      "maximum_condition_number": 85.19865410283673,
+      "minimum_log_abs_det": 1.3455903058456897e-13,
+      "maximum_log_abs_det": 1.5165646516379638e-13,
+      "minimum_determinant_sign": 1.0
+    }
+  },
+  "full_rollout_inverse_relative_error": 5.3225719898721536e-14,
+  "certified_log_bound_one_step": null,
+  "mean_absolute_final_energy_error": 6.253595347120606e-06,
+  "mean_scaled_final_energy_error": 7.050780823628341e-06,
+  "mode": "oracle_strang_1",
+  "seed": 0,
+  "training_curve": [],
+  "training_seconds": null,
+  "config_sha256": "787385c2cbaeec30525145faabbeb7bd0ccf0eea8c87d1f4d29c5abdd64b2adb",
+  "oracle_knows_equation": true
+}

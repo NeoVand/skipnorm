@@ -1,49 +1,17 @@
 {
-  "notice": "Export completed with explicit settings. This report does not establish visual, accessibility, scientific-integrity, or journal-submission compliance.",
-  "outputs": [
-    {
-      "format": "pdf",
-      "kind": "vector-container",
-      "path": "/Users/neo/repos/skipnorm/paper/fig2_dnls_unitary_rollout.pdf",
-      "size_bytes": 206141
-    },
-    {
-      "format": "png",
-      "kind": "raster",
-      "path": "/Users/neo/repos/skipnorm/paper/fig2_dnls_unitary_rollout.png",
-      "size_bytes": 1180852
-    }
+  "raw_data": "results/stage3/stage3_dnls_results.json",
+  "dataset_split": "data/splits/dnls_1d.npz (no post-step projection)",
+  "transformations": [
+    "5-seed mean and SD across 12 held-out test trajectories"
   ],
-  "provenance": {
-    "dataset_split": "data/splits/dnls_1d.npz (no post-step projection)",
-    "missing_data": "none",
-    "raw_data": "results/stage3/stage3_dnls_results.json",
-    "transformations": [
-      "5-seed mean and SD across 12 held-out test trajectories"
-    ],
-    "uncertainty": "mean ± 1 SD across n=5 independent training seeds"
+  "uncertainty": "mean \u00b1 1 SD across n=5 independent training seeds",
+  "missing_data": "none",
+  "input_sha256": {
+    "results/stage3/stage3_dnls_results.json": "83bc144c140c31ceef32a5f34154fb33699cff162cea1e8a9bf345c7e594c10f",
+    "experiments/stage4_generate_publication_figures.py": "86261dce6b16016ae0748b918129a2292157b40bb271eca2cf3d60125babbf8e"
   },
-  "schema_version": "1.0",
-  "settings": {
-    "bbox_inches": null,
-    "dpi": 600.0,
-    "facecolor": "white",
-    "figure_size_inches": [
-      7.2,
-      5.2
-    ],
-    "font_mode": "truetype",
-    "formats": [
-      "pdf",
-      "png"
-    ],
-    "pad_inches": 0.1,
-    "tiff_rgb": false,
-    "transparent": false
-  },
-  "versions": {
-    "matplotlib": "3.11.2",
-    "pillow": "12.3.0"
-  },
-  "warnings": []
+  "output_sha256": {
+    "paper/fig2_dnls_unitary_rollout.pdf": "bd9dd3d2c972f422609f72590ad8251787251bd077a3e12e74837d1f7c81aa6f",
+    "results/figures/fig2_dnls_unitary_rollout.png": "d1e79288818e4e4dd511207bb2c987d76c1f410a744fc9e6b18171942785de25"
+  }
 }

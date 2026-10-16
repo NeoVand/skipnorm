@@ -1,0 +1,48 @@
+{
+  "seed": 2,
+  "mse_20": 0.0003788661919373485,
+  "mse_50": 0.002758327300413776,
+  "mse_200": 0.06239525654456591,
+  "final_rel_norm_drift": 3.771188334062221e-15,
+  "max_rel_norm_drift": 1.2305718943161134e-14,
+  "rollout_ms": 3.526707994751632,
+  "timing_samples_ms": [
+    3.5931249149143696,
+    3.5648330813273787,
+    3.5484579857438803,
+    3.5289579536765814,
+    3.5102079855278134,
+    3.524458035826683,
+    3.4722500713542104,
+    3.5475000040605664,
+    3.5082920221611857,
+    3.4875829005613923
+  ],
+  "n_parameters": 15585,
+  "config": {
+    "width": 96,
+    "depth": 2,
+    "horizon": 8,
+    "updates": 900,
+    "batch_size": 64,
+    "optimizer": "Adam",
+    "learning_rate": 0.003,
+    "cosine_final_fraction": 0.05,
+    "weight_decay": 0.0,
+    "precision": "float64",
+    "seeds": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "split_sha256": "17394ed7b789c0fc6b7379daf7cead1d1d7b957f267fd78528ef3e5e8a8cb983",
+    "code_sha256": {
+      "experiments/stage3_dnls_benchmark.py": "756ff6ecc7a9b0c4561d746f9aa59e3865988401e40c1efc038fb6318d687ea4",
+      "skipnorm/jax_layers.py": "78a37d8c207d2988c81b11b67346958e2d4d2d2b5ad3ae835299cf5866a9f8d7"
+    }
+  },
+  "checkpoint": "results/stage3/runs_v2/geodesic_skipnorm_seed2.eqx",
+  "forecast": "results/stage3/runs_v2/geodesic_skipnorm_seed2.npz"
+}

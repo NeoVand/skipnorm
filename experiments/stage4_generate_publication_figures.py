@@ -1,8 +1,7 @@
-"""Stage 4: Publication-Grade Figure Generation using K-Dense scientific-visualization skill.
+"""Generate five publication figures from the saved experimental results.
 
-Generates 5 multi-panel vector/raster figures (PDF + 600 DPI PNG) with full JSON provenance
-manifests via figure_export.py, using scoped style_context("default", palette_name="okabe_ito_on_white")
-and constrained layout:
+Exports vector PDFs, 600 DPI PNGs, and manifests containing source/output hashes,
+using a repository-local Matplotlib style and constrained layout:
   - fig1_geometry_and_spectra.{pdf,png,export.json}
   - fig2_dnls_unitary_rollout.{pdf,png,export.json}
   - fig3_scalar_foliation_lotka_volterra.{pdf,png,export.json}
@@ -12,14 +11,13 @@ and constrained layout:
 
 from __future__ import annotations
 
+import hashlib
 import json
+from contextlib import contextmanager
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SKILL_DIR = Path("/Users/neo/.gemini/config/plugins/science/skills/scientific-visualization")
-sys.path.insert(0, str(SKILL_DIR / "scripts"))
-sys.path.insert(0, str(SKILL_DIR / "assets"))
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
@@ -31,20 +29,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import FancyArrowPatch
 
-from color_palettes import get_palette
-from figure_export import export_figure
-from style_presets import style_context
-
 STAGE1_JSON = ROOT / "results" / "stage1" / "stage1_results.json"
 STAGE2_JSON = ROOT / "results" / "stage2" / "stage2_results.json"
 STAGE3_JSON = ROOT / "results" / "stage3" / "stage3_dnls_results.json"
 SPLITS_DIR = ROOT / "data" / "splits"
 PAPER_DIR = ROOT / "paper"
 RESULTS_FIG_DIR = ROOT / "results" / "figures"
-ARTIFACT_DIR = Path("/Users/neo/.gemini/antigravity/brain/7ceba0dd-69e5-454a-9c5e-cdea1454eade")
 
-# Okabe-Ito colorblind-safe palette on white (all >= 3.0:1 WCAG contrast on #FFFFFF)
-PAL = get_palette("okabe_ito_on_white")
+# Colors based on the Okabe-Ito palette, with dark variants for small marks.
 C_BLUE = "#0072B2"
 C_VERM = "#D55E00"
 C_GREEN = "#009E73"
@@ -57,39 +49,40 @@ C_GRAY = "#555555"
 HALO = [pe.withStroke(linewidth=2.5, foreground="white")]
 
 
+@contextmanager
+def style_context(*args, **kwargs):
+    """Repository-local plot style; no external skill installation is required."""
+    with mpl.rc_context({"font.family": "DejaVu Sans", "font.size": 7.5,
+                         "axes.labelsize": 7.5, "xtick.labelsize": 6.5,
+                         "ytick.labelsize": 6.5, "axes.linewidth": 0.7,
+                         "pdf.fonttype": 42, "ps.fonttype": 42,
+                         "savefig.facecolor": "white"}):
+        yield
+
+
 def export_all_targets(fig: plt.Figure, stem: str, prov: dict) -> None:
-    """Export vector PDF to paper/, PNG + JSON manifest to results/figures/, and PNG to artifact dir."""
+    """Export figures and record hashes of the inputs actually used."""
     RESULTS_FIG_DIR.mkdir(parents=True, exist_ok=True)
-    export_figure(
-        fig,
-        PAPER_DIR / stem,
-        formats=["pdf"],
-        dpi=600,
-        bbox_inches=None,
-        overwrite=True,
-        provenance=prov,
-        write_manifest=False,
-    )
-    export_figure(
-        fig,
-        RESULTS_FIG_DIR / stem,
-        formats=["png"],
-        dpi=600,
-        bbox_inches=None,
-        overwrite=True,
-        provenance=prov,
-        write_manifest=True,
-    )
-    export_figure(
-        fig,
-        ARTIFACT_DIR / stem,
-        formats=["png"],
-        dpi=600,
-        bbox_inches=None,
-        overwrite=True,
-        provenance=prov,
-        write_manifest=False,
-    )
+    PAPER_DIR.mkdir(parents=True, exist_ok=True)
+    pdf = PAPER_DIR / f"{stem}.pdf"
+    png = RESULTS_FIG_DIR / f"{stem}.png"
+    # Keep annotations legible when the full-width figure is embedded in the paper.
+    for text in fig.findobj(match=mpl.text.Text):
+        if text.get_fontsize() < 7.0:
+            text.set_fontsize(7.0)
+    for legend in fig.findobj(match=mpl.legend.Legend):
+        legend.set_frame_on(True)
+        legend.get_frame().set_facecolor("white")
+        legend.get_frame().set_edgecolor("none")
+        legend.get_frame().set_alpha(0.94)
+    fig.savefig(pdf, metadata={"Creator": "Matplotlib", "CreationDate": None})
+    fig.savefig(png, dpi=600)
+    raw = prov.get("raw_data", [])
+    raw = [raw] if isinstance(raw, str) else raw
+    inputs = raw + ["experiments/stage4_generate_publication_figures.py"]
+    prov["input_sha256"] = {p: hashlib.sha256((ROOT / p).read_bytes()).hexdigest() for p in inputs}
+    prov["output_sha256"] = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in [pdf, png]}
+    (RESULTS_FIG_DIR / f"{stem}.export.json").write_text(json.dumps(prov, indent=2) + "\n")
 
 
 def add_panel_label(ax: plt.Axes, label: str, x: float = -0.14, y: float = 1.07) -> None:
@@ -332,7 +325,7 @@ def build_figure_1(stage1: dict) -> None:
 
         spectra = stage1["proposition_2"]["rmsnorm_stabilized_spectra"]
         r_grid = np.array(spectra[0]["r_grid"])
-        ax_b.axhline(1.0, color=C_BLUE, linewidth=1.8, linestyle="-", label=r"SkipNorm $\sigma_r = 1$")
+        ax_b.axhline(1.0, color=C_BLUE, linewidth=1.8, linestyle="-", label=r"SkipNorm radial pair ($B=0$)")
 
         eps_styles = [
             (1e-2, C_VERM, "--", "o", r"RMSNorm $\sigma_{\mathrm{rad}}$ ($\varepsilon=10^{-2}$)"),
@@ -347,11 +340,10 @@ def build_figure_1(stage1: dict) -> None:
                 color=col,
                 linestyle=ls,
                 linewidth=1.3,
-                marker=mk,
-                markevery=6,
-                markersize=3.5,
                 label=lbl,
             )
+            ax_b.plot(r_grid[::6], np.asarray(rec["sigma_rad_autodiff"])[::6],
+                      linestyle="none", marker=mk, color=col, markersize=3.5)
 
         rec_tan = next(item for item in spectra if abs(item["eps"] - 1e-2) < 1e-12)
         ax_b.plot(
@@ -428,7 +420,7 @@ def build_figure_1(stage1: dict) -> None:
         depths = np.array(d100["depths"])
         series_d = [
             ("Geodesic SkipNorm", C_BLUE, "-", "o", "Geodesic SkipNorm"),
-            ("SkipNorm (LeakyReLU)", C_SKY, "--", "s", "SkipNorm (Direct)"),
+            ("SkipNorm (Tanh)", C_SKY, "--", "s", "SkipNorm (Direct)"),
             ("Unnormalized MLP", C_GRAY, "-.", "v", "Unnormalized MLP"),
             ("RMSNorm (eps=1e-1)", C_VERM, ":", "^", r"RMSNorm ($\varepsilon=10^{-1}$)"),
             ("RMSNorm (eps=1e-2)", C_PURP, "--", "D", r"RMSNorm ($\varepsilon=10^{-2}$)"),
@@ -484,7 +476,7 @@ def build_figure_2(stage3: dict) -> None:
 
         # --- Panel a: Spatiotemporal wavepacket density |psi_{n,t}|^2 ---
         add_panel_label(ax_a, "a")
-        ax_a.set_title(r"1D DNLS Soliton Wavepacket $|\psi_{n,t}|^2$", fontsize=8.5, fontweight="bold", pad=6)
+        ax_a.set_title(r"1D DNLS Localized Wavepacket $|\psi_{n,t}|^2$", fontsize=8.5, fontweight="bold", pad=6)
         im = ax_a.imshow(
             density_gt.T,
             aspect="auto",
@@ -497,13 +489,13 @@ def build_figure_2(stage3: dict) -> None:
         cbar = fig.colorbar(im, ax=ax_a, pad=0.02, fraction=0.046)
         cbar.set_label(r"Site density $|\psi_n|^2$", fontsize=7.2)
         cbar.ax.tick_params(labelsize=6.5)
-        ax_a.set_xlabel("Physical time $t$ ($250$ steps, no projection)")
+        ax_a.set_xlabel("Physical time $t$ (249 steps, no projection)")
         ax_a.set_ylabel("Lattice site index $n$")
 
         # --- Panel b: Relative L2 norm drift over 250 steps ---
         style_axes(ax_b)
         add_panel_label(ax_b, "b")
-        ax_b.set_title(r"Unitary Norm Drift $|\|\psi_t\|_2^2 - \|\psi_0\|_2^2|/\|\psi_0\|_2^2$", fontsize=8.5, fontweight="bold", pad=6)
+        ax_b.set_title(r"Power Drift $|\|\psi_t\|_2^2 - \|\psi_0\|_2^2|/\|\psi_0\|_2^2$", fontsize=8.5, fontweight="bold", pad=6)
 
         t_steps = np.array(stage3["drift_traces"]["t_steps"][1:])
         rk4_drift = np.maximum(np.array(stage3["drift_traces"]["RK4 Reference (No Proj)"][1:]), 1e-16)
@@ -603,14 +595,18 @@ def build_figure_2(stage3: dict) -> None:
         y_min_d = min(y_vals_all) * 0.68
         y_max_d = max(y_vals_all) * 1.48
 
-        # Sort cluster of fast models (x < 10 ms) by y to place labels without overlap
-        fast_models = [(m, c, mk, summ[m]["rollout_ms_mean"], summ[m]["mse_50_mean"]) for m, c, mk in raw_pts if summ[m]["rollout_ms_mean"] < 12.0]
+        # Spread all direct labels vertically; placement adapts to measured timings.
+        fast_models = [(m, c, mk, summ[m]["rollout_ms_mean"], summ[m]["mse_50_mean"]) for m, c, mk in raw_pts]
         fast_models.sort(key=lambda item: item[4])
         log_ymin = np.log10(y_min_d * 1.15)
         log_ymax = np.log10(y_max_d * 0.78)
         label_y_slots = np.logspace(log_ymin, log_ymax, len(fast_models))
-        slot_map = {item[0]: (7.2 if item[0] != "Linear Orthogonal SO(32)" else 3.4, float(label_y_slots[idx])) for idx, item in enumerate(fast_models)}
-        slot_map["State-Dependent SO(32)"] = (7.5, summ["State-Dependent SO(32)"]["mse_50_mean"])
+        costs = [summ[m]["rollout_ms_mean"] for m, _, _ in raw_pts]
+        label_x = np.sqrt(min(costs) * max(costs))
+        slot_map = {item[0]: (label_x, float(label_y_slots[idx])) for idx, item in enumerate(fast_models)}
+        short_labels = {"Geodesic SkipNorm": "Geodesic", "Projected Residual SkipNorm": "Projected residual",
+                        "Unconstrained ResNet": "ResNet", "Pre-RMSNorm Residual": "Pre-RMSNorm",
+                        "Linear Orthogonal SO(32)": "Linear orthogonal", "State-Dependent SO(32)": "State Cayley"}
 
         for m_name, col, mk in raw_pts:
             rec = summ[m_name]
@@ -621,6 +617,7 @@ def build_figure_2(stage3: dict) -> None:
                 [x_ms],
                 [y_mse],
                 yerr=[y_std],
+                xerr=[rec["rollout_ms_std"]],
                 fmt=mk,
                 color=col,
                 markersize=6.0,
@@ -629,7 +626,7 @@ def build_figure_2(stage3: dict) -> None:
                 zorder=5,
             )
             ax_d.annotate(
-                m_name,
+                short_labels[m_name],
                 xy=(x_ms, y_mse),
                 xytext=slot_map[m_name],
                 textcoords="data",
@@ -643,14 +640,14 @@ def build_figure_2(stage3: dict) -> None:
 
         ax_d.set_xscale("log")
         ax_d.set_yscale("log")
-        ax_d.set_xlim(2.1, 45.0)
+        ax_d.set_xlim(min(costs) * .75, max(costs) * 1.65)
         ax_d.set_ylim(y_min_d, y_max_d)
-        ax_d.set_xticks([3.0, 5.0, 10.0, 20.0, 30.0])
+        ax_d.xaxis.set_major_locator(mpl.ticker.LogLocator(base=10.0, subs=(1.0, 2.0, 3.0, 5.0)))
         ax_d.get_xaxis().set_major_formatter(mpl.ticker.ScalarFormatter())
         ax_d.yaxis.set_major_locator(mpl.ticker.LogLocator(base=10.0, subs=(1.0, 2.0, 3.0, 5.0)))
         ax_d.get_yaxis().set_major_formatter(mpl.ticker.FormatStrFormatter("%.3g"))
         ax_d.minorticks_off()
-        ax_d.set_xlabel("250-step rollout wall-clock time (ms, log)")
+        ax_d.set_xlabel("249-step batch rollout time (ms, log)")
         ax_d.set_ylabel("50-step rollout MSE (mean ± SD, log)")
 
         prov = {
@@ -665,14 +662,14 @@ def build_figure_2(stage3: dict) -> None:
 
 
 def _extract_closed_loop(traj: np.ndarray) -> np.ndarray:
-    """Slice a trajectory (T, 2) enclosing (0,0) to exactly one 2*pi revolution and close the loop."""
+    """Show at most one revolution, without inserting artificial closing segments."""
     angles = np.unwrap(np.arctan2(traj[:, 1], traj[:, 0]))
     delta_ang = np.abs(angles - angles[0])
     idx_candidates = np.where(delta_ang >= 2.0 * np.pi)[0]
     if len(idx_candidates) > 0:
         end_idx = int(idx_candidates[0])
-        return np.vstack([traj[:end_idx], traj[0:1]])
-    return np.vstack([traj, traj[0:1]])
+        return traj[:end_idx + 1]
+    return traj
 
 
 def build_figure_3(stage2: dict) -> None:
@@ -715,7 +712,7 @@ def build_figure_3(stage2: dict) -> None:
         # --- Panel b: Encoded latent space z = E(x) under Geodesic SkipNorm ---
         style_axes(ax_b)
         add_panel_label(ax_b, "b")
-        ax_b.set_title(r"Latent Foliation $E(O_c) \subset \mathbf{S}^1(\psi(c))$", fontsize=8.5, fontweight="bold", pad=6)
+        ax_b.set_title(r"Encoded Held-Out Trajectories", fontsize=8.5, fontweight="bold", pad=6)
         theta_circle = np.linspace(0, 2 * np.pi, 240)
         for i in range(0, len(c_inv), 2):
             r_mean_i = float(np.mean(r_orbits[i]))
@@ -746,7 +743,7 @@ def build_figure_3(stage2: dict) -> None:
         # --- Panel c: Monotone profile psi(c) = ||E(x)||_2 vs true invariant c ---
         style_axes(ax_c)
         add_panel_label(ax_c, "c")
-        ax_c.set_title(r"Monotone Radius Law $\bar{r}_m = \psi(c_m)$ (Held-Out)", fontsize=8.2, fontweight="bold", pad=6)
+        ax_c.set_title(r"Mean Radius Across Invariant Levels", fontsize=8.2, fontweight="bold", pad=6)
 
         order = np.argsort(c_inv)
         c_sort = c_inv[order]
@@ -789,7 +786,7 @@ def build_figure_3(stage2: dict) -> None:
         # --- Panel d: 5-seed summary across all 6 architectures (light fills so error bars are crisp) ---
         style_axes(ax_d)
         add_panel_label(ax_d, "d")
-        ax_d.set_title("5-Seed Invariant Identification Metrics", fontsize=8.5, fontweight="bold", pad=6)
+        ax_d.set_title("Radius Variation and Test Calibration", fontsize=8.5, fontweight="bold", pad=6)
 
         summ = lv["summary"]
         models_lv = [
@@ -797,7 +794,6 @@ def build_figure_3(stage2: dict) -> None:
             ("Geodesic SkipNorm (Bijective)", "Geodesic (Bij.)", "#B2ABD2"),
             ("Projected Residual SkipNorm", "Proj. Residual", "#66C2A5"),
             ("State-Dependent SO(2)", "State SO(2)", "#FDB863"),
-            ("COMET Baseline", "COMET", "#E7969C"),
             ("Unconstrained AE", "Unconstrained", "#F4A582"),
         ]
         y_pos = np.arange(len(models_lv))
@@ -819,7 +815,7 @@ def build_figure_3(stage2: dict) -> None:
         ax_d.set_yticks(y_pos)
         ax_d.set_yticklabels([m[1] for m in models_lv], fontsize=7.0)
         ax_d.invert_yaxis()
-        ax_d.set_xlabel(r"Within-orbit radial $\mathrm{CV}_O(h)$ (lower is better; 0 baseline)")
+        ax_d.set_xlabel(r"Within-orbit radial $\mathrm{CV}_O(h)$ (lower is better)")
         ax_d.set_xlim(0.0, max(cv_means) * 1.48)
 
         for i, (bar, r2_val) in enumerate(zip(bars, r2_means)):
@@ -827,7 +823,7 @@ def build_figure_3(stage2: dict) -> None:
             ax_d.text(
                 w + 0.008,
                 bar.get_y() + bar.get_height() / 2.0,
-                f"Iso $R^2={r2_val:.3f}$",
+                f"$R^2={r2_val:.5f}$",
                 va="center",
                 ha="left",
                 fontsize=6.3,
@@ -862,7 +858,7 @@ def build_figure_4(stage1: dict, stage2: dict) -> None:
         # --- Panel a: Double-Well Disjoint Basins & Bijective Off-Centering ---
         style_axes(ax_a)
         add_panel_label(ax_a, "a")
-        ax_a.set_title("Theorem 2: Bijective Encoder Cannot Center Both Wells", fontsize=8.2, fontweight="bold", pad=6)
+        ax_a.set_title("Bijective Double-Well Encoding", fontsize=8.2, fontweight="bold", pad=6)
 
         z_bij = np.array(ex_bij["test_orbits_z"])
         wells = np.array(ex_bij["test_wells"])
@@ -880,7 +876,7 @@ def build_figure_4(stage1: dict, stage2: dict) -> None:
         # --- Panel b: Unconstrained MLP Non-Injective Well Folding ---
         style_axes(ax_b)
         add_panel_label(ax_b, "b")
-        ax_b.set_title("Well-Folding MLP Overlaps Disjoint Basin Radii", fontsize=8.2, fontweight="bold", pad=6)
+        ax_b.set_title("Constructed Reflection Quotient Control", fontsize=8.2, fontweight="bold", pad=6)
 
         r_mlp = np.mean(np.array(ex_mlp["test_radii"]), axis=1)
         r_bij = np.mean(np.array(ex_bij["test_radii"]), axis=1)
@@ -894,7 +890,7 @@ def build_figure_4(stage1: dict, stage2: dict) -> None:
             color=C_BLUE,
             marker="o",
             s=26,
-            label="Folding MLP Left Well ($q<0$)",
+            label="Quotient Left Well ($q<0$)",
         )
         ax_b.scatter(
             e_inv[right_m],
@@ -902,7 +898,7 @@ def build_figure_4(stage1: dict, stage2: dict) -> None:
             color=C_VERM,
             marker="^",
             s=26,
-            label="Folding MLP Right Well ($q>0$)",
+            label="Quotient Right Well ($q>0$)",
         )
         ax_b.scatter(
             e_inv[left_m],
@@ -929,7 +925,7 @@ def build_figure_4(stage1: dict, stage2: dict) -> None:
         # --- Panel c: Resonant 1:1 2D Harmonic Oscillator Control (Theorem 1) ---
         style_axes(ax_c)
         add_panel_label(ax_c, "c")
-        ax_c.set_title("Resonant 1:1 Oscillator: Why Orbit Density Matters", fontsize=8.2, fontweight="bold", pad=6)
+        ax_c.set_title("Resonant Oscillator: Constant Radius per Orbit", fontsize=8.2, fontweight="bold", pad=6)
 
         res_ho = stage1["resonant_harmonic_oscillator_control"]
         etas = np.array(res_ho["partition_eta"])
@@ -956,9 +952,9 @@ def build_figure_4(stage1: dict, stage2: dict) -> None:
         ax_c.text(
             0.04,
             1.96,
-            "Within-orbit $\\mathrm{CV}_O(h) = 4.2 \\times 10^{-16}$\n"
-            "Intertwining error $= 0.0$\n"
-            "Same-shell radius spread $= 50\\%$",
+            f"Within-orbit CV = {res_ho['max_within_orbit_cv']:.1e}\n"
+            f"Intertwining error = {res_ho['max_intertwining_error']:.1e}\n"
+            "Same-shell radius: $\\sqrt{2}$ to $2$",
             fontsize=6.2,
             color="#222222",
         )
@@ -970,7 +966,7 @@ def build_figure_4(stage1: dict, stage2: dict) -> None:
         # --- Panel d: Translated Identity Encoder Control E_a(x) = a*e_1 + x ---
         style_axes(ax_d)
         add_panel_label(ax_d, "d")
-        ax_d.set_title(r"Translated Encoder $E_a(x)=ae_1+x$: $O(a^{-1})$ Decay", fontsize=8.2, fontweight="bold", pad=6)
+        ax_d.set_title(r"Translated Encoder: Small Relative Errors", fontsize=8.2, fontweight="bold", pad=6)
 
         tr_ctrl = stage1["translated_encoder_control"]["shift_sweep"]
         a_vals = np.array([item["shift_a"] for item in tr_ctrl])
@@ -1028,7 +1024,7 @@ def build_figure_4(stage1: dict, stage2: dict) -> None:
             ],
             "transformations": [
                 "encoded true trajectories on double_well_balanced.npz",
-                "analytical 1:1 harmonic oscillator Hopf-fiber warp",
+                "analytical 1:1 harmonic oscillator diagonal encoder",
                 "translated identity encoder sweep a in [2, 10000]",
             ],
             "uncertainty": "exact analytical controls & 5-seed double-well evaluation",
@@ -1056,7 +1052,7 @@ def build_figure_5(stage2: dict) -> None:
         # --- Panel a: Observed coordinate norm oscillation on a 2-torus trajectory ---
         style_axes(ax_a)
         add_panel_label(ax_a, "a")
-        ax_a.set_title("Observed 4D Coupled Torus Coordinate Fluctuations", fontsize=8.2, fontweight="bold", pad=6)
+        ax_a.set_title("Observed Coordinate Norms", fontsize=8.2, fontweight="bold", pad=6)
 
         t_steps = np.arange(te_orbits.shape[1])
         orb0 = te_orbits[0]
@@ -1097,27 +1093,27 @@ def build_figure_5(stage2: dict) -> None:
         )
         ax_b.set_xlabel("Time step $t$ (encoded true trajectory $z_t = E(x_t)$)")
         ax_b.set_ylabel("Latent block radius")
-        ax_b.set_ylim(-0.01, 0.59)
+        ax_b.set_ylim(0.0, 1.55 * max(float(traces_k2[:2].max()), float(traces_unc[0, :, 0].max())))
         ax_b.legend(loc="upper right", bbox_to_anchor=(0.99, 0.99), fontsize=5.5, frameon=False)
 
         # --- Panel c: Single-Sphere Limit vs 2-Block Action Recovery ---
         style_axes(ax_c)
         add_panel_label(ax_c, "c")
-        ax_c.set_title(r"Theorem 3: Single Radius $\|z\|_2$ Cannot Separate $(I_1, I_2)$", fontsize=8.2, fontweight="bold", pad=6)
+        ax_c.set_title(r"Scalar Radius Across Held-Out Invariant Levels", fontsize=8.2, fontweight="bold", pad=6)
 
         inv_te = np.array(ex_k2["test_invariants"])  # (20, 2)
         r_blk_te = np.array(ex_k2["test_mean_block_radii"])  # (20, 2)
         sc = ax_c.scatter(
             inv_te[:, 0],
             inv_te[:, 1],
-            c=np.linalg.norm(r_blk_te, axis=-1),
+            c=np.asarray(ex_k2["test_mean_total_radius"]),
             cmap="viridis",
             s=46,
             edgecolor=C_BLACK,
             linewidth=0.6,
         )
         cbar = fig.colorbar(sc, ax=ax_c, pad=0.02, fraction=0.046)
-        cbar.set_label(r"Single total radius $\|\bar{\boldsymbol{\rho}}\|_2$", fontsize=7.0)
+        cbar.set_label(r"Mean total radius $\overline{\|z\|_2}$", fontsize=7.0)
         cbar.ax.tick_params(labelsize=6.5)
         ax_c.set_xlabel(r"True action invariant $I_1$")
         ax_c.set_ylabel(r"True action invariant $I_2$")
@@ -1125,14 +1121,15 @@ def build_figure_5(stage2: dict) -> None:
         # --- Panel d: 5-Seed Comparison of 1-Scalar vs 2-Block Readout R^2 (clean light fills, no hatches) ---
         style_axes(ax_d)
         add_panel_label(ax_d, "d")
-        ax_d.set_title("1-Scalar vs. 2-Block Invariant Readout $R^2$ (5 Seeds)", fontsize=8.2, fontweight="bold", pad=6)
+        ax_d.set_title("Held-Out Invariant Readout (5 Seeds)", fontsize=8.2, fontweight="bold", pad=6)
 
         labels_t = [
             "2-Block Toroidal Geodesic SkipNorm (K=2)",
+            "2-Block Geodesic SkipNorm (General Vector Field)",
             "Single-Sphere Geodesic SkipNorm (K=1)",
             "Unconstrained AE (d_z=4)",
         ]
-        short_names = ["2-Block Geodesic\n($K=2$)", "Single-Sphere\n($K=1$)", "Unconstrained AE\n($d_z=4$)"]
+        short_names = ["2-Block\nRadial field", "2-Block\nGeneral field", "Sphere\n($K=1$)", "Unconstr.\nAE"]
         x_idx = np.arange(len(labels_t))
         width_b = 0.34
 
@@ -1151,7 +1148,7 @@ def build_figure_5(stage2: dict) -> None:
             linewidth=0.65,
             capsize=2.6,
             error_kw=dict(ecolor="#111111", lw=1.15, capthick=1.0),
-            label=r"1-Scalar Readout ($\|z\|_2 \in \mathbf{R}$)",
+            label=r"Scalar readout ($\overline{\|z\|_2}$)",
         )
         ax_d.bar(
             x_idx + width_b / 2,
@@ -1163,13 +1160,13 @@ def build_figure_5(stage2: dict) -> None:
             linewidth=0.65,
             capsize=2.6,
             error_kw=dict(ecolor="#111111", lw=1.15, capthick=1.0),
-            label=r"2-Block Readout ($(\bar{r}_1, \bar{r}_2) \in \mathbf{R}^2$)",
+            label=r"Two-block readout ($(\bar{r}_1, \bar{r}_2)$)",
         )
 
-        ax_d.axhline(0.50, color=C_VERM, linestyle=":", linewidth=1.0, label="1D Projection Ceiling (~0.50)")
+        ax_d.axhline(0.0, color=C_GRAY, linestyle=":", linewidth=0.7)
         ax_d.set_xticks(x_idx)
-        ax_d.set_xticklabels(short_names, fontsize=7.0)
-        ax_d.set_ylim(0.0, 1.32)
+        ax_d.set_xticklabels(short_names, fontsize=6.0)
+        ax_d.set_ylim(min(0., min(np.array(r2_1s)-np.array(r2_1s_sd)), min(np.array(r2_2b)-np.array(r2_2b_sd))) - .05, 1.32)
         ax_d.set_ylabel(r"Held-out $(I_1, I_2)$ Readout $R^2$")
         ax_d.legend(loc="upper right", fontsize=5.5, frameon=False)
 

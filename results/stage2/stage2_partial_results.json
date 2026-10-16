@@ -1,0 +1,107 @@
+{
+  "metadata": {
+    "protocol_version": "stage2-v2-heldout-calibration",
+    "seeds": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "complete_suite": false,
+    "seed_sd_ddof": 1,
+    "started_utc": "2026-10-15T16:59:19.916561+00:00",
+    "steps_multiplier": 1.0,
+    "completed_utc": "2026-10-15T17:00:18.799096+00:00"
+  },
+  "lotka_volterra": {
+    "summary": {
+      "Projected-Invariant Baseline (COMET-inspired)": {
+        "seeds": [
+          {
+            "seed": 0,
+            "rollout_mse_20": 0.24424135985388118,
+            "rollout_mse": 0.24424135985388118,
+            "physical_eval_horizon": 1.8,
+            "mean_cv": 0.3707328991698375,
+            "ovr": 0.8237649791933291,
+            "ovr_status": "valid",
+            "isotonic_r2": 0.9995852610277276,
+            "spearman_abs_rho": 1.0,
+            "artifact_directory": "results/stage2/runs/lotka_volterra/projected_invariant_seed0_add3bc2ff689a0ef"
+          },
+          {
+            "seed": 1,
+            "rollout_mse_20": 0.18408689976385406,
+            "rollout_mse": 0.18408689976385406,
+            "physical_eval_horizon": 1.8,
+            "mean_cv": 0.3925710638786189,
+            "ovr": 0.6597176117429374,
+            "ovr_status": "valid",
+            "isotonic_r2": 0.9999266086787254,
+            "spearman_abs_rho": 1.0,
+            "artifact_directory": "results/stage2/runs/lotka_volterra/projected_invariant_seed1_8f68f2c184497878"
+          },
+          {
+            "seed": 2,
+            "rollout_mse_20": 0.0006790100449923714,
+            "rollout_mse": 0.0006790100449923714,
+            "physical_eval_horizon": 1.8,
+            "mean_cv": 0.02404282887341603,
+            "ovr": 0.0025352875848009358,
+            "ovr_status": "valid",
+            "isotonic_r2": 0.9999968404800879,
+            "spearman_abs_rho": 1.0,
+            "artifact_directory": "results/stage2/runs/lotka_volterra/projected_invariant_seed2_ae074d22c5dbe3fc"
+          },
+          {
+            "seed": 3,
+            "rollout_mse_20": 0.7950488203734885,
+            "rollout_mse": 0.7950488203734885,
+            "physical_eval_horizon": 1.8,
+            "mean_cv": 0.5214400630843541,
+            "ovr": 0.8428082258009753,
+            "ovr_status": "valid",
+            "isotonic_r2": 0.9998896063080985,
+            "spearman_abs_rho": 1.0,
+            "artifact_directory": "results/stage2/runs/lotka_volterra/projected_invariant_seed3_3f9e4c19ad694c96"
+          },
+          {
+            "seed": 4,
+            "rollout_mse_20": 0.22951407515151917,
+            "rollout_mse": 0.22951407515151917,
+            "physical_eval_horizon": 1.8,
+            "mean_cv": 0.4899084635286368,
+            "ovr": 0.8383725217639744,
+            "ovr_status": "valid",
+            "isotonic_r2": 0.9998188656346976,
+            "spearman_abs_rho": 1.0,
+            "artifact_directory": "results/stage2/runs/lotka_volterra/projected_invariant_seed4_a3afae3c51a00170"
+          }
+        ],
+        "rollout_mse_20_mean": 0.29071403303754706,
+        "rollout_mse_20_std": 0.29822323099807896,
+        "rollout_mse_20_valid_seeds": 5,
+        "mean_cv_mean": 0.3597390637069727,
+        "mean_cv_std": 0.19810480344028644,
+        "mean_cv_valid_seeds": 5,
+        "ovr_mean": 0.6334397252172035,
+        "ovr_std": 0.3608279573365855,
+        "ovr_valid_seeds": 5,
+        "isotonic_r2_mean": 0.9998434364258675,
+        "isotonic_r2_std": 0.00015798761462954954,
+        "isotonic_r2_valid_seeds": 5,
+        "spearman_abs_rho_mean": 1.0,
+        "spearman_abs_rho_std": 0.0,
+        "spearman_abs_rho_valid_seeds": 5
+      }
+    },
+    "exemplar_traces": {},
+    "evaluation": {
+      "rollout_steps": 12,
+      "stride": 3,
+      "physical_horizon": 1.8,
+      "legacy_field_rollout_mse_20": "alias only; actual horizon is 12 coarse steps"
+    }
+  }
+}

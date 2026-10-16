@@ -1,53 +1,22 @@
 {
-  "notice": "Export completed with explicit settings. This report does not establish visual, accessibility, scientific-integrity, or journal-submission compliance.",
-  "outputs": [
-    {
-      "format": "pdf",
-      "kind": "vector-container",
-      "path": "/Users/neo/repos/skipnorm/paper/fig4_topological_obstructions_and_controls.pdf",
-      "size_bytes": 93793
-    },
-    {
-      "format": "png",
-      "kind": "raster",
-      "path": "/Users/neo/repos/skipnorm/paper/fig4_topological_obstructions_and_controls.png",
-      "size_bytes": 1136217
-    }
+  "raw_data": [
+    "results/stage1/stage1_results.json",
+    "results/stage2/stage2_results.json"
   ],
-  "provenance": {
-    "missing_data": "none",
-    "raw_data": [
-      "results/stage1/stage1_results.json",
-      "results/stage2/stage2_results.json"
-    ],
-    "transformations": [
-      "encoded true trajectories on double_well_balanced.npz",
-      "analytical 1:1 harmonic oscillator Hopf-fiber warp",
-      "translated identity encoder sweep a in [2, 10000]"
-    ],
-    "uncertainty": "exact analytical controls & 5-seed double-well evaluation"
+  "transformations": [
+    "encoded true trajectories on double_well_balanced.npz",
+    "analytical 1:1 harmonic oscillator diagonal encoder",
+    "translated identity encoder sweep a in [2, 10000]"
+  ],
+  "uncertainty": "exact analytical controls & 5-seed double-well evaluation",
+  "missing_data": "none",
+  "input_sha256": {
+    "results/stage1/stage1_results.json": "81341d024c4ca00e6f7370ecdc1946dfe13894f13868559ba00dc4c0ba4dc0ab",
+    "results/stage2/stage2_results.json": "cb1f24dd8d99bd50638b720c69ee00580abb85c8a6204cf854378fc7f4b08414",
+    "experiments/stage4_generate_publication_figures.py": "86261dce6b16016ae0748b918129a2292157b40bb271eca2cf3d60125babbf8e"
   },
-  "schema_version": "1.0",
-  "settings": {
-    "bbox_inches": null,
-    "dpi": 600.0,
-    "facecolor": "white",
-    "figure_size_inches": [
-      7.2,
-      5.4
-    ],
-    "font_mode": "truetype",
-    "formats": [
-      "pdf",
-      "png"
-    ],
-    "pad_inches": 0.1,
-    "tiff_rgb": false,
-    "transparent": false
-  },
-  "versions": {
-    "matplotlib": "3.11.2",
-    "pillow": "12.3.0"
-  },
-  "warnings": []
+  "output_sha256": {
+    "paper/fig4_topological_obstructions_and_controls.pdf": "e2fdebe8c08f88f8c6c14ee534f7ba1cef3b7ee1fe3d7290c2d5604da9e0fa62",
+    "results/figures/fig4_topological_obstructions_and_controls.png": "f22b29d74afd027a521083bbe9793233d8964d9ac643d616bb7a315bf051066c"
+  }
 }

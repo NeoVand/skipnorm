@@ -1,0 +1,89 @@
+{
+  "mse_1": 3.169305786265527e-06,
+  "mse_20": 0.0004334709960329414,
+  "mse_50": 0.0024336446673363234,
+  "mse_200": 0.0352753546724504,
+  "mse_249": 0.045886765623431656,
+  "max_relative_power_drift": 5.478029723084634e-14,
+  "mean_final_relative_power_drift": 1.3170273759712203e-14,
+  "rollout_ms": 1.389687939081341,
+  "timing_samples_ms": [
+    1.527832937426865,
+    1.3893339782953262,
+    1.4186670305207372,
+    1.4063329435884953,
+    1.3574579497799277,
+    1.385000068694353,
+    1.3900418998673558,
+    1.4186250045895576,
+    1.363874995149672,
+    1.3444580836221576
+  ],
+  "n_parameters": 1025,
+  "mean_final_relative_energy_drift": 82.08967502729907,
+  "one_step_jacobian": {
+    "finite_fraction": 1.0,
+    "minimum_singular_value": 0.9999999999999993,
+    "maximum_singular_value": 1.0000000000000004,
+    "maximum_condition_number": 1.000000000000001,
+    "minimum_log_abs_det": -1.5073323990887066e-15,
+    "maximum_log_abs_det": -1.5073323990887066e-15,
+    "minimum_determinant_sign": 1.0
+  },
+  "mean_symplectic_defect": 0.012496630584487628,
+  "relative_phase_equivariance_error": 0.003682787891816885,
+  "origin_jacobian": {
+    "finite_fraction": 1.0,
+    "minimum_singular_value": 0.9999999999999993,
+    "maximum_singular_value": 1.0000000000000004,
+    "maximum_condition_number": 1.000000000000001,
+    "minimum_log_abs_det": -1.5073323990887066e-15,
+    "maximum_log_abs_det": -1.5073323990887066e-15,
+    "minimum_determinant_sign": 1.0
+  },
+  "repeated_time_step_jacobian": {
+    "1": {
+      "finite_fraction": 1.0,
+      "minimum_singular_value": 0.9999999999999993,
+      "maximum_singular_value": 1.0000000000000004,
+      "maximum_condition_number": 1.000000000000001,
+      "minimum_log_abs_det": -1.5073323990887066e-15,
+      "maximum_log_abs_det": -1.5073323990887066e-15,
+      "minimum_determinant_sign": 1.0
+    },
+    "10": {
+      "finite_fraction": 1.0,
+      "minimum_singular_value": 0.999999999999995,
+      "maximum_singular_value": 1.0000000000000013,
+      "maximum_condition_number": 1.0000000000000064,
+      "minimum_log_abs_det": -1.0408340855860843e-14,
+      "maximum_log_abs_det": -1.0408340855860843e-14,
+      "minimum_determinant_sign": 1.0
+    },
+    "50": {
+      "finite_fraction": 1.0,
+      "minimum_singular_value": 0.9999999999999589,
+      "maximum_singular_value": 1.0000000000000095,
+      "maximum_condition_number": 1.0000000000000506,
+      "minimum_log_abs_det": -5.731526364627371e-14,
+      "maximum_log_abs_det": -5.731526364627371e-14,
+      "minimum_determinant_sign": 1.0
+    },
+    "200": {
+      "finite_fraction": 1.0,
+      "minimum_singular_value": 0.9999999999998769,
+      "maximum_singular_value": 1.000000000000049,
+      "maximum_condition_number": 1.0000000000001723,
+      "minimum_log_abs_det": -1.8052226380405045e-13,
+      "maximum_log_abs_det": -1.8052226380405045e-13,
+      "minimum_determinant_sign": 1.0
+    }
+  },
+  "mode": "linear_orthogonal",
+  "label": "Linear orthogonal",
+  "seed": 2,
+  "training_curve": [],
+  "training_seconds": null,
+  "baseline_checkpoint": "results/stage3/runs_v2/linear_orthogonal_seed2",
+  "config_sha256": "abcf3881ad48084169bd74dbc60716f752f1c2e65f01d172569029304be6cc67"
+}

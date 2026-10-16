@@ -1,0 +1,83 @@
+{
+  "mse_1": 2.5116364633790354e-06,
+  "mse_20": 0.00034108770024087696,
+  "mse_50": 0.0023382204336420626,
+  "mse_200": 0.06214578844817724,
+  "mse_249": 0.07235679704984269,
+  "max_relative_power_drift": 8.733090862888547e-15,
+  "mean_final_relative_power_drift": 3.492391129556012e-15,
+  "rollout_ms": 3.520291473250836,
+  "timing_samples_ms": [
+    3.6171249812468886,
+    3.5455829929560423,
+    3.520832979120314,
+    3.528582979924977,
+    3.470374969765544,
+    3.5568750463426113,
+    3.519749967381358,
+    3.5147499293088913,
+    3.4766249591484666,
+    3.502374980598688
+  ],
+  "n_parameters": 15585,
+  "mean_final_relative_energy_drift": 86.98223541067712,
+  "one_step_jacobian": {
+    "finite_fraction": 1.0,
+    "minimum_singular_value": 0.9408937981461132,
+    "maximum_singular_value": 1.0882007703807668,
+    "maximum_condition_number": 1.1485591975576133,
+    "minimum_log_abs_det": 0.042688086119460594,
+    "maximum_log_abs_det": 0.3174628687039276,
+    "minimum_determinant_sign": 1.0
+  },
+  "mean_symplectic_defect": 0.05411974670425648,
+  "relative_phase_equivariance_error": 0.01128453190638198,
+  "origin_jacobian": {
+    "finite_fraction": 0.0
+  },
+  "repeated_time_step_jacobian": {
+    "1": {
+      "finite_fraction": 1.0,
+      "minimum_singular_value": 0.9416761416684286,
+      "maximum_singular_value": 1.0815707936338395,
+      "maximum_condition_number": 1.148559197557613,
+      "minimum_log_abs_det": 0.07728724840299206,
+      "maximum_log_abs_det": 0.20264147801709312,
+      "minimum_determinant_sign": 1.0
+    },
+    "10": {
+      "finite_fraction": 1.0,
+      "minimum_singular_value": 0.5676277499301795,
+      "maximum_singular_value": 2.102494583699313,
+      "maximum_condition_number": 3.704002462807585,
+      "minimum_log_abs_det": 0.6244932198331209,
+      "maximum_log_abs_det": 1.9232512805215327,
+      "minimum_determinant_sign": 1.0
+    },
+    "50": {
+      "finite_fraction": 1.0,
+      "minimum_singular_value": 0.14766712784490196,
+      "maximum_singular_value": 18.42516642977338,
+      "maximum_condition_number": 97.74789778980642,
+      "minimum_log_abs_det": -1.3676788607184658,
+      "maximum_log_abs_det": 7.884961357657839,
+      "minimum_determinant_sign": 1.0
+    },
+    "200": {
+      "finite_fraction": 1.0,
+      "minimum_singular_value": 8.600705124448285e-05,
+      "maximum_singular_value": 3539.8033562242626,
+      "maximum_condition_number": 374000.926651757,
+      "minimum_log_abs_det": -146.04227055187056,
+      "maximum_log_abs_det": 3.2563579279376733,
+      "minimum_determinant_sign": 1.0
+    }
+  },
+  "mode": "geodesic_skipnorm",
+  "label": "Geodesic SkipNorm",
+  "seed": 0,
+  "training_curve": [],
+  "training_seconds": null,
+  "baseline_checkpoint": "results/stage3/runs_v2/geodesic_skipnorm_seed0",
+  "config_sha256": "abcf3881ad48084169bd74dbc60716f752f1c2e65f01d172569029304be6cc67"
+}

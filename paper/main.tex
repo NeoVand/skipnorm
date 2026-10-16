@@ -1,5 +1,5 @@
 \documentclass[10pt]{article}
-\usepackage[preprint]{tmlr}
+\usepackage{tmlr}
 
 \usepackage{amsmath,amssymb,amsfonts,amsthm,bm,mathtools}
 \usepackage{booktabs}
@@ -39,60 +39,50 @@
 \DeclareMathOperator{\CV}{CV}
 \DeclareMathOperator{\OVR}{OVR}
 
-\title{Norm-Transferring Skip Connections and Radial Foliation of Conserved Quantities in Dynamical Autoencoders}
-
-\author{\name Author Name \email author@institution.edu \\
-      \addr Department of Mathematics and Computer Science\\
-      Research University}
-
-\newcommand{\fix}{\marginpar{FIX}}
-\newcommand{\new}{\marginpar{NEW}}
-
-\def\month{10}
-\def\year{2026}
-\def\openreview{\url{https://openreview.net/forum?id=XXXX}}
+\title{Conditional Radial Foliation in Norm-Preserving Dynamical Autoencoders}
 
 \begin{document}
 
 \maketitle
 
 \begin{abstract}
-Standard normalization layers such as LayerNorm and RMSNorm project activations onto a sphere of fixed radius, discarding the input norm $\norm{x}_p$ at every block. We study \textbf{SkipNorm}, a norm-transferring skip connection $\hat{y} = \norm{x}_p \, f(x) / \norm{f(x)}_p$ that decouples angular feature transformation from radial magnitude transport, alongside its tangent-space retraction \textbf{Geodesic SkipNorm}, which eliminates the antipodal sign-flip instability of unprojected normalized residuals when a residual update opposes the input direction. First, we establish the exact differential geometry of SkipNorm and stabilized normalizers: we prove that for $p=2$, the Jacobian transpose of SkipNorm pulls the output radial unit covector back to the exact input radial unit covector ($J^\top u_{\mathrm{out}} = u_{\mathrm{in}}$) across arbitrary dimensions, while explicit counterexamples show that $J u_{\mathrm{in}} = u_{\mathrm{out}}$ and unit radial singular values fail whenever radial-to-angular derivatives $B = (\partial u_{\mathrm{out}}/\partial r)\norm{x}_2$ are nonzero. We derive the exact singular value spectra of $\varepsilon$-stabilized RMSNorm and LayerNorm, showing that their radial singular value is suppressed by $\mathcal{O}(\varepsilon / r^3)$ rather than vanishing identically when $\varepsilon > 0$. Second, on the focusing 1D discrete nonlinear Schr\"odinger (DNLS) equation integrated by a converged reference solver without artificial post-step normalization, Geodesic SkipNorm preserves the discrete $L_2$ soliton norm to machine precision ($\sim 4.1 \times 10^{-15}$) over 250 rollout steps at $7.4\times$ lower latency than state-dependent $\mathrm{SO}(32)$ Cayley transitions. Third, we prove a conditional \textbf{Radial Foliation Theorem}: when an injective encoder intertwines a continuous flow on connected level sets with a norm-preserving latent transition and orbits are topologically dense in each connected level set, the latent radius is strictly constant on each level set ($\CV_{\mathcal{O}}(h) = 0$) and provides a continuous, strictly monotone coordinate on regular level intervals. Crucially, we prove and empirically verify two topological obstructions: a \textbf{Jordan--Brouwer Multi-Well Obstruction} prohibiting simultaneous origin-enclosing embeddings of disconnected sub-barrier basins under global homeomorphisms, and a \textbf{Toroidal Multi-Invariant Obstruction} on $\Tor^K$ ($K \ge 2$) resolved by generalizing SkipNorm to $K$-block direct sums $\bigoplus_{k=1}^K \R^{d_k}$.
+Under exact intertwining, a norm-preserving latent transition makes the encoder norm a conserved quantity, but this alone does not identify the physical invariants. We characterize when it does. Under exact intertwining, regular level sets, and dense sampled orbits on a dense set of invariant values, the latent radius is constant on every level set. If the encoder is globally injective, the latent and observed dimensions match, and the level sets are compact and connected, the radius is a continuous strictly monotone coordinate for a scalar invariant. We also establish two limitations: disjoint enclosed basins cannot both map to origin-centered spheres under an injective encoder, and one continuous scalar radius cannot identify an open set of multiple independent invariants. For compact toroidal leaves, preserving a radius in each of $K$ planar latent blocks instead identifies the invariant vector up to a homeomorphism. These conditional results use standard separation and invariance-of-domain arguments. Supporting analysis distinguishes exact radial gradient pullback from forward dynamical isometry and treats stabilized normalization explicitly. Experiments on discrete nonlinear Schr\"odinger dynamics, Lotka--Volterra dynamics, and coupled oscillators examine conservation, prediction, and invariant readout separately, including controls for resonance and encoder translation. A two-block ablation shows that the strongest empirical recovery also relies on a radius-dependent frequency prior in our fixed training protocol.
 \end{abstract}
 
 \section{Introduction}
 \label{sec:intro}
 
-Deep residual networks, recurrent architectures, and neural differential equations rely on normalization and skip connections to stabilize signal and gradient propagation across depth and time \citep{he2016deep, ba2016layer, zhang2019root}. Yet standard normalizers---including LayerNorm \citep{ba2016layer}, RMSNorm \citep{zhang2019root}, Cosine Normalization \citep{luo2018cosine}, and hyperspherical architectures such as nGPT \citep{loshchilov2024ngpt}---achieve angular conditioning by resetting the Euclidean norm of the activation vector to a fixed constant or learned parameter. In doing so, they discard the input magnitude $\norm{x}_2$ at every layer. While discarding radial scale is benign when scale is nuisance variation, in physical forecasting, conservative dynamical systems, and representation learning of extensive state variables, the norm carries essential energy, mass, or amplitude information.
+Norm-preserving latent dynamics provide a simple architectural prior for conservative systems. Given an encoder $E$, a latent transition $g$ with $\norm{g(z)}_2=\norm{z}_2$, and exact intertwining $E\circ\Phi_{\Delta t}=g\circ E$, the quantity $h(x)=\norm{E(x)}_2$ is invariant under the observed time-step map. This fact leaves an identification question: when does $h$ distinguish physical invariant levels, and when can it remain uninformative despite accurate dynamics? We address this question through the geometry of the level sets and the injectivity of the encoder.
 
-A natural resolution is to normalize the nonlinear branch $f(x)$ onto the unit sphere and transfer the input norm $\norm{x}_p$ multiplicatively via a scalar skip connection:
+The normalization primitive studied here transfers the input magnitude to a transformed direction:
 \begin{equation}
-    \operatorname{SkipNorm}_p(x; f) \coloneqq \frac{f(x)}{\norm{f(x)}_p} \norm{x}_p, \qquad x \in \R^{d_{\mathrm{in}}} \setminus \{0\}, \quad f(x) \in \R^{d_{\mathrm{out}}} \setminus \{0\}.
+    \operatorname{SkipNorm}_p(x; f) \coloneqq \frac{f(x)}{\norm{f(x)}_p} \norm{x}_p, \qquad x \ne 0,\quad f(x)\ne0.
     \label{eq:skipnorm_def}
 \end{equation}
-Despite its simplicity, the exact differential geometry of Eq.~\eqref{eq:skipnorm_def} and its consequences for dynamical representation learning are surprisingly subtle. First, it is tempting to assume that because $\norm{\hat{y}}_2 = \norm{x}_2$, the Jacobian $J = \partial \hat{y} / \partial x$ maps the input radial unit vector $u_{\mathrm{in}} = x / \norm{x}_2$ to the output radial unit vector $u_{\mathrm{out}} = \hat{y} / \norm{\hat{y}}_2$ and possesses a unit singular value $\sigma = 1$. As we prove in Section~\ref{sec:geometry}, both forward statements are \emph{false} in general unless the radial-to-angular derivative $B \coloneqq (\partial u_{\mathrm{out}}/\partial r)\norm{x}_2$ vanishes; what holds unconditionally for $p=2$ across arbitrary dimensions $d_{\mathrm{in}}, d_{\mathrm{out}}$ is the \textbf{cotangent radial pullback identity} $J^\top u_{\mathrm{out}} = u_{\mathrm{in}}$, which guarantees $\sigma_{\max}(J) \ge 1$ and exact unit-norm backward propagation of radial gradients across arbitrary depth. Second, when Eq.~\eqref{eq:skipnorm_def} is combined with a residual branch $y = x + \alpha f(x)$ (as in normalized residual steps), large opposing radial components $\alpha \inner{f(x), u_{\mathrm{in}}} < -\norm{x}_2$ trigger a discontinuous \textbf{antipodal sign-flip instability} ($\hat{y} \approx -x$). Projecting $f(x)$ onto the tangent space $T_x \Sp^{d-1}(\norm{x}_2)$ prior to spherical retraction yields \textbf{Geodesic SkipNorm}, which eliminates the antipodal flip unconditionally and guarantees a strictly first-order tangential update for all step sizes $\alpha > 0$.
+For $p=2$, projecting a residual branch onto the input sphere's tangent space before normalization gives the spherical retraction we call Geodesic SkipNorm. This geometric update is established in manifold optimization \citep{absil2008optimization}; SpheretNorm uses the same projection--retraction and derives its radial pullback identity \citep{zhang2026spheretnorm}. Our contribution is the conditional identification theory for dynamical autoencoders, rather than priority for this update.
 
-Beyond single-layer conditioning, norm-preserving transitions play a foundational role in latent-space dynamical models $(E, g, D)$, where an encoder $E: \mathcal{M} \to \R^{d_z}$ maps observed trajectories $x_t$ into a latent space evolved by a norm-preserving map $g: \R^{d_z} \to \R^{d_z}$ ($\norm{g(z)}_2 = \norm{z}_2$). When an autoencoder is trained to predict multi-step rollouts without access to ground-truth conserved quantities, how does the interplay between the norm-preserving latent transition $g$ and the topology of the observed phase space $\mathcal{M}$ organize the latent space? Rather than claiming an unconditional ``invariant discovery machine,'' we formulate and prove exact \emph{conditional} theorems alongside explicit \emph{topological and dynamical counterexamples} that delineate precisely when latent radial foliation succeeds and when it must fail.
+Norm preservation and dynamical isometry are different properties. The exact identity $J^\top u_{\mathrm{out}}=u_{\mathrm{in}}$ holds for every differentiable Euclidean norm-preserving map away from zero, including maps between different dimensions. A forward radial singular pair exists precisely when radial perturbations produce no angular change; other unit singular values may exist without this condition. We give the general Jacobian decomposition and exact rank condition. For comparison, ideal gain-free RMSNorm removes radial scale and ideal LayerNorm also removes the mean, whereas positive stabilizers retain radial sensitivity and learned affine parameters change the primitive spectra \citep{ba2016layer, zhang2019root}. These distinctions matter when interpreting gradient and conservation measurements.
 
-\paragraph{Summary of Contributions.}
+Our main results concern regular invariant level sets. Density of a sampled orbit makes any continuous invariant constant on its closure. Combined with global encoder injectivity and matched dimensions, invariance of domain then forces a compact connected scalar level set to fill an entire latent sphere, making its radius a strictly monotone invariant coordinate. For multiple invariants, $K$ planar norm-preserving blocks provide the corresponding product of circles. The hypotheses are substantive: disconnected basins obstruct a common spherical representation, and resonant orbits need not explore an entire level set. Approximate training does not by itself certify injectivity or exact intertwining.
+
+\paragraph{Contributions.}
 \begin{enumerate}
-    \item \textbf{Exact Jacobian Geometry, Stabilized Normalizer Spectra, and Tangent Retraction (Section~\ref{sec:geometry}):} We prove the exact block decomposition of the SkipNorm Jacobian across arbitrary dimensions $d_{\mathrm{in}}, d_{\mathrm{out}}$ (Proposition~\ref{prop:skipnorm_jacobian}), establishing the unconditional cotangent pullback $J^\top u_{\mathrm{out}} = u_{\mathrm{in}}$ while providing explicit analytical counterexamples ($2\times 2$ logarithmic-phase twist with singular values $\{\varphi, \varphi^{-1}\}$ and $1\to 2$ spiral with $\sigma = \sqrt{2}$) whenever $B \neq 0$. We derive the exact singular value spectra of $\varepsilon$-stabilized RMSNorm and LayerNorm (Proposition~\ref{prop:stabilized_spectra}) and prove that tangent-projected Geodesic SkipNorm eliminates the antipodal sign-flip instability of unprojected normalized residuals (Proposition~\ref{prop:geodesic_skipnorm}).
-    \item \textbf{Projection-Free Unitary Rollouts on 1D DNLS (Section~\ref{sec:dnls}):} On the focusing 1D discrete nonlinear Schr\"odinger (DNLS) equation integrated by a $10\times$-substepped RK4 reference solver \emph{without} post-step normalization (intrinsic solver drift $1.32 \times 10^{-11}$), Geodesic SkipNorm preserves the discrete $L_2$ soliton norm to machine precision ($4.09 \times 10^{-15}$) over 250 steps across 5 seeds while running $7.4\times$ faster than state-dependent $\mathrm{SO}(32)$ Cayley orthogonal steps.
-    \item \textbf{Conditional Radial Foliation Theorem and Orbit-Density Control (Section~\ref{sec:foliation}):} We prove that if a continuous encoder $E$ intertwines a flow with a norm-preserving latent map $g$ and orbits are topologically dense in each connected level set $\mathcal{O}_c$, then $\norm{E(x)}_2 = \psi(c)$ is constant on each $\mathcal{O}_c$, and under global injectivity $\psi$ is strictly monotone on regular level intervals (Theorem~\ref{thm:radial_foliation}). A resonant $1:1$ 2D harmonic oscillator control in $\R^4$ demonstrates why topological orbit density is indispensable: exact intertwining with $g \in \mathrm{SO}(4)$ achieves zero within-orbit radial variation ($\CV_{\mathcal{O}}(h) = 4.17 \times 10^{-16}$) yet exhibits a $50\%$ radius spread across orbits on the same energy shell $H=1$.
-    \item \textbf{Jordan--Brouwer Multi-Well and Toroidal $\Tor^K$ Obstructions (Sections~\ref{sec:obstructions}--\ref{sec:torus}):} Using the Jordan--Brouwer separation theorem, we prove that no continuous injective encoder $E: U \to \R^N$ can map two disjoint sub-barrier level components $\mathcal{O}_c^{(1)}, \mathcal{O}_c^{(2)} \cong \Sp^{N-1}$ onto concentric spheres around the origin while keeping both basins origin-enclosing (Theorem~\ref{thm:jordan_brouwer}), and analyze the non-concentric off-origin bypass via an explicit translated-encoder control $E_a(x) = a e_1 + x$ with $\mathcal{O}(a^{-1})$ radial variation. Finally, we prove why a single spherical norm constraint cannot identify $K \ge 2$ independent invariants on Liouville--Arnold tori $\Tor^K$ and resolve this obstruction via \textbf{$K$-Block Toroidal Geodesic SkipNorm} on $\bigoplus_{k=1}^K \R^{d_k}$, raising held-out $(I_1, I_2)$ readout $R^2$ from $0.146$ (1-scalar ceiling) to $0.9993$ (Theorem~\ref{thm:toroidal_kblock}).
+    \item We state and prove scalar and toroidal radial-foliation theorems, allowing sampled-orbit density on a dense set of regular invariant values, and identify the dimension and injectivity conditions needed for invariant recovery (Sections~\ref{sec:foliation} and \ref{sec:torus}).
+    \item We establish the obstruction for disjoint enclosed basins and give resonance and translation controls that delimit what radial constancy and relative errors can establish (Section~\ref{sec:obstructions}).
+    \item We derive the rectangular Jacobian and rank formulas and stabilized primitive normalization spectra, then evaluate norm preservation, trajectory error, and invariant readout as distinct outcomes (Sections~\ref{sec:geometry}--\ref{sec:torus}).
 \end{enumerate}
 
 \section{Related Work}
 \label{sec:related}
 
-\paragraph{Normalization Layers and Magnitude--Direction Disentanglement.}
-Standard normalization layers project representations onto a fixed-radius manifold: LayerNorm \citep{ba2016layer} centers and scales activations onto the $(d-2)$-sphere in the zero-mean hyperplane, while RMSNorm \citep{zhang2019root} and Cosine Normalization \citep{luo2018cosine} project onto $\Sp^{d-1}(\sqrt{d})$ or $\Sp^{d-1}(1)$. Weight Normalization \citep{salimans2016weight} decouples weight vector norms from directions in parameter space, and hyperspherical VAEs \citep{davidson2018hyperspherical, xu2018spherical} model directional latent distributions via von Mises--Fisher densities. In modern Transformers, Pre-LN residual streams suffer from unchecked activation norm growth with depth, prompting nGPT \citep{loshchilov2024ngpt} to constrain hidden states and updates to the unit hypersphere via spherical linear interpolation, and Dynamic Tanh (DyT) \citep{zhu2025transformers} to replace normalization with bounded elementwise squashing. Unlike unit-sphere normalizers that discard $\norm{x}_2$, SkipNorm transfers the input norm $\norm{x}_p$ across arbitrary nonlinear branches $f: \R^{d_{\mathrm{in}}} \to \R^{d_{\mathrm{out}}}$.
+\paragraph{Normalization and spherical updates.}
+Without affine parameters or stabilizers, LayerNorm maps centered activations onto a sphere in the zero-mean hyperplane, while RMSNorm fixes the Euclidean radius \citep{ba2016layer, zhang2019root}. These are statements about the primitive operators, not arbitrary pre-normalized residual blocks. Weight Normalization separates magnitude and direction in parameter space \citep{salimans2016weight}, and hyperspherical VAEs use directional latent distributions \citep{davidson2018hyperspherical, xu2018spherical}. nGPT normalizes hidden states and updates on the sphere \citep{loshchilov2024ngpt}; GeoNorm projects updates into the tangent space and uses a spherical exponential map \citep{zheng2026geonorm}. SpheretNorm's projection--retraction update coincides with the tangent-projected norm-preserving update analyzed here, and its Appendix~D.7 gives the corresponding radial pullback identity \citep{zhang2026spheretnorm}. We use this established primitive to study conditions for latent invariant identification.
 
-\paragraph{Dynamical Isometry and Orthogonal/Unitary Transitions.}
-Preserving singular values near unity across deep or recurrent compositions (\emph{dynamical isometry}; \citealp{saxe2014exact, pennington2017resurrecting}) motivated unitary and orthogonal RNNs parameterized via products of structured matrices \citep{arjovsky2016unitary}, exponential maps \citep{lezcano2019cheap}, or Cayley transforms $Q(S) = (I - S)(I + S)^{-1}$ \citep{helfrich2018orthogonal}. However, linear orthogonal maps $Q \in O(d)$ require equal input and output dimensions ($d_{\mathrm{in}} = d_{\mathrm{out}}$), cannot incorporate state-dependent nonlinearities without recomputing an $\mathcal{O}(d^3)$ matrix inverse or factorization at every step, and act globally on $\R^d$. Geodesic SkipNorm preserves Euclidean norms exactly in $\mathcal{O}(d)$ vector arithmetic while permitting arbitrary nonlinear tangent vector fields.
+\paragraph{Orthogonal transitions and dynamical isometry.}
+Dynamical isometry concerns the full singular spectrum of a network Jacobian \citep{saxe2014exact, pennington2017resurrecting}; preserving a state norm alone does not ensure it. Orthogonal and unitary recurrent models use structured products, exponential maps, and Cayley transforms \citep{arjovsky2016unitary, lezcano2019cheap, helfrich2018orthogonal}. Tall linear isometries can also preserve norms across a dimension increase. State-dependent orthogonal maps need not all incur cubic cost: our timing comparison concerns the dense Cayley implementation, which solves a dense linear system at each step. The spherical retraction itself uses $\mathcal{O}(d)$ arithmetic in addition to the cost of its learned vector field.
 
-\paragraph{Physics-Informed Priors and Conserved-Quantity Discovery.}
-Hamiltonian Neural Networks (HNNs; \citealp{greydanus2019hamiltonian}), Symplectic ODE-Nets \citep{zhong2020symplectic}, and Lagrangian Neural Networks \citep{cranmer2020lagrangian} enforce conservation laws by hard-coding canonical symplectic or Euler--Lagrange structures on known phase-space coordinates $(q, p)$. Conversely, invariant-discovery methods seek conserved quantities from trajectory data without canonical coordinate assumptions: Siamese and manifold-learning approaches \citep{wetzel2020discovering, liu2021ai} contrast same-orbit and different-orbit pairs, PoincareFlows \citep{barajas2025poincare} learn volume-preserving flows, and COMET \citep{otto2023learning} penalizes the orthogonal complement of candidate invariant gradients along observed velocities. Our work bridges norm-preserving architectural primitives with invariant manifold theory: we show how intertwining an autoencoder with a spherical or toroidal SkipNorm transition organizes conserved quantities into latent radii under explicit topological conditions, and we prove exact topological obstructions (via invariance of domain and Jordan--Brouwer separation; \citealp{brouwer1911beweis, hatcher2002algebraic}) when level sets are disconnected or toroidal \citep{arnold1989mathematical}.
+\paragraph{Conservation laws and latent dynamical representations.}
+Hamiltonian Neural Networks and Symplectic ODE-Nets exploit Hamiltonian structure \citep{greydanus2019hamiltonian, zhong2020symplectic}; Lagrangian Neural Networks formulate dynamics through learned Lagrangians in configuration--velocity coordinates \citep{cranmer2020lagrangian}. Invariant-discovery approaches include Siamese invariant learning \citep{wetzel2020discovering} and trajectory manifold learning \citep{liu2021ai}, learned first integrals with projected dynamics in COMET \citep{otto2023learning}, and contrastively learned invariant representations with a dynamics projection layer in ConCerNet \citep{zhang2023concernet}. Learned latent dynamical coordinates also connect to Koopman autoencoders \citep{lusch2018deep}. Our results characterize what a particular architectural invariant---the latent norm or vector of block norms---identifies under exact intertwining. The proofs apply standard topological tools \citep{brouwer1911beweis, hatcher2002algebraic}; they do not guarantee that finite-data optimization satisfies their hypotheses or that the recovered coordinates are canonical actions.
 
 \section{Differential Geometry of SkipNorm and Stabilized Normalizers}
 \label{sec:geometry}
@@ -106,11 +96,11 @@ Let $x \in \R^{d_{\mathrm{in}}} \setminus \{0\}$ with radius $r = \norm{x}_2 > 0
     F(x) \coloneqq \frac{f(x)}{\norm{f(x)}_2} \norm{x}_2 = r \, u_{\mathrm{out}}(x), \qquad \norm{F(x)}_2 = \norm{x}_2.
     \label{eq:skipnorm_l2}
 \end{equation}
-In stabilized numerical implementations with $\varepsilon > 0$, we write $F_\varepsilon(x) = f(x) \sqrt{\norm{x}_2^2 + \varepsilon} / \sqrt{\norm{f(x)}_2^2 + \varepsilon}$. Differentiating $\norm{u_{\mathrm{out}}(x)}_2^2 \equiv 1$ gives $u_{\mathrm{out}}^\top D_x u_{\mathrm{out}}(x) = 0$, so the image of $D_x u_{\mathrm{out}}(x) = \norm{y}_2^{-1}(I_{d_{\mathrm{out}}} - u_{\mathrm{out}} u_{\mathrm{out}}^\top) D_x f(x)$ lies strictly in the tangent hyperplane $T_{u_{\mathrm{out}}} \Sp^{d_{\mathrm{out}}-1} = u_{\mathrm{out}}^\perp$. Decomposing $\R^{d_{\mathrm{in}}} = \operatorname{span}(u_{\mathrm{in}}) \oplus u_{\mathrm{in}}^\perp$ and $\R^{d_{\mathrm{out}}} = \operatorname{span}(u_{\mathrm{out}}) \oplus u_{\mathrm{out}}^\perp$ reveals the exact structure of the Jacobian $J(x) = D_x F(x)$.
+A possible stabilized implementation is $F_\varepsilon(x) = f(x) \sqrt{\norm{x}_2^2 + \varepsilon} / \sqrt{\norm{f(x)}_2^2 + \varepsilon}$. It does not preserve the norm exactly in general; all identities below refer to the ideal map $F$ on its nonzero domain. Differentiating $\norm{u_{\mathrm{out}}(x)}_2^2 \equiv 1$ gives $u_{\mathrm{out}}^\top D_x u_{\mathrm{out}}(x) = 0$, so the image of $D_x u_{\mathrm{out}}(x) = \norm{y}_2^{-1}(I_{d_{\mathrm{out}}} - u_{\mathrm{out}} u_{\mathrm{out}}^\top) D_x f(x)$ lies strictly in the tangent hyperplane $T_{u_{\mathrm{out}}} \Sp^{d_{\mathrm{out}}-1} = u_{\mathrm{out}}^\perp$. Decomposing $\R^{d_{\mathrm{in}}} = \operatorname{span}(u_{\mathrm{in}}) \oplus u_{\mathrm{in}}^\perp$ and $\R^{d_{\mathrm{out}}} = \operatorname{span}(u_{\mathrm{out}}) \oplus u_{\mathrm{out}}^\perp$ reveals the exact structure of the Jacobian $J(x) = D_x F(x)$.
 
 \begin{proposition}[Exact Jacobian Geometry of Euclidean SkipNorm]
 \label{prop:skipnorm_jacobian}
-Let $F: \R^{d_{\mathrm{in}}} \setminus \{0\} \to \R^{d_{\mathrm{out}}}$ be given by Eq.~\eqref{eq:skipnorm_l2} at $x \neq 0$ with $f(x) \neq 0$. Define the radial-to-angular sensitivity vector $B(x) \in u_{\mathrm{out}}^\perp$ and the tangential-to-angular operator $A_{\perp}(x): u_{\mathrm{in}}^\perp \to u_{\mathrm{out}}^\perp$ by
+Let $F$ be given by Eq.~\eqref{eq:skipnorm_l2} near $x\ne0$, with $f$ of class $C^1$ and $f(x)\ne0$. Define the radial-to-angular sensitivity vector $B(x) \in u_{\mathrm{out}}^\perp$ and the tangential-to-angular operator $A_{\perp}(x): u_{\mathrm{in}}^\perp \to u_{\mathrm{out}}^\perp$ by
 \begin{equation}
     B(x) \coloneqq r (D_x u_{\mathrm{out}}(x)) u_{\mathrm{in}} = \left. r \frac{\partial u_{\mathrm{out}}(r u_{\mathrm{in}})}{\partial r} \right|_{r = \norm{x}_2} \in u_{\mathrm{out}}^\perp, \qquad A_{\perp}(x) \coloneqq \left. r D_x u_{\mathrm{out}}(x) \right|_{u_{\mathrm{in}}^\perp}.
     \label{eq:B_and_Aperp}
@@ -130,7 +120,7 @@ Then:
         \label{eq:cotangent_pullback}
     \end{equation}
     Furthermore, for any composition $F_{\mathrm{total}} = F_L \circ \cdots \circ F_1$ of $L$ SkipNorm layers with $x_\ell = F_\ell(x_{\ell-1}) \neq 0$, the end-to-end Jacobian $J_{\mathrm{total}} = \prod_{\ell=1}^L J_\ell$ satisfies $J_{\mathrm{total}}^\top u_L = u_0$ and $\norm{J_{\mathrm{total}}^\top u_L}_2 = 1$ identically.
-    \item[\textbf{(c)}] \textbf{Conditional Forward Pushforward and Unit Singular Value:} The forward radial pushforward equals $J(x) u_{\mathrm{in}} = u_{\mathrm{out}} + B(x)$ with $\norm{J(x) u_{\mathrm{in}}}_2 = \sqrt{1 + \norm{B(x)}_2^2}$. Consequently, $J(x) u_{\mathrm{in}} = u_{\mathrm{out}}$ if and only if $B(x) = 0$ (which holds automatically whenever $f$ is positively homogeneous of any degree $\gamma \in \R$, i.e., $f(\lambda x) = \lambda^\gamma f(x)$ for $\lambda > 0$). When $B(x) = 0$, the block matrix $[J(x)] = \diag(1, \tilde{A})$ decouples orthogonally, so $\sigma = 1$ is an exact singular value of $J(x)$ with left/right singular vectors $(u_{\mathrm{out}}, u_{\mathrm{in}})$ and the remaining singular values are $\sigma(\tilde{A})$.
+    \item[\textbf{(c)}] \textbf{Conditional Forward Pushforward and Unit Singular Value:} The forward radial pushforward equals $J(x) u_{\mathrm{in}} = u_{\mathrm{out}} + B(x)$ with $\norm{J(x) u_{\mathrm{in}}}_2 = \sqrt{1 + \norm{B(x)}_2^2}$. Consequently, $J(x) u_{\mathrm{in}} = u_{\mathrm{out}}$ if and only if $B(x) = 0$ (which holds automatically whenever $f$ is positively homogeneous of any degree $\gamma \in \R$, i.e., $f(\lambda x) = \lambda^\gamma f(x)$ for $\lambda > 0$). When $B(x) = 0$, the block matrix $[J(x)] = \diag(1, \tilde{A})$ decouples orthogonally, so $\sigma = 1$ is an exact singular value of $J(x)$ with left/right singular vectors $(u_{\mathrm{out}}, u_{\mathrm{in}})$ and the remaining singular values are $\sigma(\tilde{A})$. If $B(x)\ne0$, this radial singular pair is absent, although unrelated unit singular values can still occur.
     \item[\textbf{(d)}] \textbf{Explicit Counterexamples when $B(x) \neq 0$:}
     \begin{enumerate}
         \item[\emph{(i)}] \emph{Equidimensional Twist ($d_{\mathrm{in}} = d_{\mathrm{out}} = 2$):} For $f(x) = R_{\log \norm{x}_2} x$, where $R_\theta \in \mathrm{SO}(2)$ is planar rotation by $\theta = \log \norm{x}_2$, we have $\norm{f(x)}_2 = \norm{x}_2$ so $F(x) = f(x)$. At $x = e_1 = (1, 0)^\top$, $B(e_1) = e_2 \neq 0$ and
@@ -151,25 +141,32 @@ Proposition~\ref{prop:skipnorm_jacobian} clarifies a critical geometric distinct
     \caption{\textbf{Exact Jacobian geometry of SkipNorm, stabilized normalizer spectra, and tangent-space Geodesic retraction.}
     \textbf{(a)} Geometric decomposition on $\Sp^{d-1}(r)$: Geodesic SkipNorm projects $f(x)$ onto $T_x \Sp^{d-1}(r)$ before retracting onto the input sphere, guaranteeing the unconditional cotangent radial pullback $J^\top u_{\mathrm{out}} = u_{\mathrm{in}}$.
     \textbf{(b)} Exact singular values of $\varepsilon$-stabilized RMSNorm ($d=16$) versus pre-normalization norm $r = \norm{y}_2$: solid/dashed curves show Proposition~\ref{prop:stabilized_spectra} analytical formulas and markers show JAX float64 autodiff SVDs (max discrepancy $1.33 \times 10^{-13}$).
-    \textbf{(c)} Cosine similarity $\inner{\hat{y}, x}/\norm{x}_2^2$ versus radial opposition $-\alpha \inner{f(x), u_{\mathrm{in}}}/\norm{x}_2$: unprojected Projected Residual SkipNorm suffers an antipodal sign flip ($\hat{y} \to -x$) past threshold $1$, whereas tangent-projected Geodesic SkipNorm remains smooth and flip-free.
-    \textbf{(d)} Depth-100 backward radial gradient pullback $\norm{J_{\mathrm{total}}^\top u_L}_2$: SkipNorm and Geodesic SkipNorm preserve exact unit radial pullback ($1.0000$) across 100 layers, whereas stabilized RMSNorm attenuates radial gradients exponentially as $(\sigma_{\mathrm{rad}}(\varepsilon))^L$ down to the float64 precision floor ($\sim 10^{-15}$).}
+    \textbf{(c)} Cosine similarity $\inner{\hat{y}, x}/\norm{x}_2^2$ versus radial opposition $-\alpha \inner{f(x), u_{\mathrm{in}}}/\norm{x}_2$: the residual update without tangent projection suffers an antipodal sign flip ($\hat{y} \to -x$) past threshold $1$, whereas tangent-projected Geodesic SkipNorm remains smooth and flip-free.
+    \textbf{(d)} Depth-100 backward radial gradient pullback $\norm{J_{\mathrm{total}}^\top u_L}_2$: SkipNorm and Geodesic SkipNorm preserve exact unit radial pullback ($1.0000$) across 100 layers, whereas the stabilized RMSNorm composition attenuates them in this configuration. Values below $10^{-16}$ are clipped for display; this is not an arithmetic precision floor.}
     \label{fig:geometry}
 \end{figure}
 
 \subsection{Exact Singular Value Spectra of $\varepsilon$-Stabilized RMSNorm and LayerNorm}
 
-A common folklore claim is that RMSNorm and LayerNorm have a strictly zero radial singular value ($\sigma_{\mathrm{rad}} = 0$) and rank deficiency of $1$ or $2$. While true for unstabilized maps ($\varepsilon = 0$), practical implementations always include a numerical stabilizer $\varepsilon > 0$ inside the square root. Proposition~\ref{prop:stabilized_spectra} establishes the exact singular value spectra for both $\varepsilon = 0$ and $\varepsilon > 0$.
+The ideal gain-free RMSNorm and LayerNorm primitives lose one and two directions, respectively. A positive stabilizer restores sensitivity in the radial direction but does not restore the mean direction removed by LayerNorm. Proposition~\ref{prop:stabilized_spectra} treats these primitives before learned affine parameters or composition with a branch. Multiplication by a learned diagonal gain or by a branch Jacobian generally changes their singular values; additive biases do not affect the derivative but do change the output geometry.
 
 \begin{proposition}[Exact Rank and Stabilized Singular Value Spectra of SkipNorm, RMSNorm, and LayerNorm]
 \label{prop:stabilized_spectra}
-Let $y \in \R^d \setminus \{0\}$ with $r = \norm{y}_2 > 0$ and $u = y / r$. For LayerNorm, let $\tilde{y} = (I_d - \frac{1}{d}\mathbf{1}\mathbf{1}^\top)y \neq 0$ with $r_c = \norm{\tilde{y}}_2 > 0$ and $u_c = \tilde{y}/r_c \in \mathbf{1}^\perp$.
+For the gain-free primitive operators, let $y \in \R^d \setminus \{0\}$ with $r = \norm{y}_2 > 0$ and $u = y / r$. For LayerNorm, let $\tilde{y} = (I_d - \frac{1}{d}\mathbf{1}\mathbf{1}^\top)y \neq 0$ with $r_c = \norm{\tilde{y}}_2 > 0$ and $u_c = \tilde{y}/r_c \in \mathbf{1}^\perp$.
 \begin{enumerate}
     \item[\textbf{(a)}] \textbf{Exact Rank Relation for Unstabilized Normalizers ($\varepsilon = 0$):} For $y = f(x)$ with $A = D_x f(x) \in \R^{d_{\mathrm{out}} \times d_{\mathrm{in}}}$ and $P_\perp = I_{d_{\mathrm{out}}} - u_{\mathrm{out}} u_{\mathrm{out}}^\top$, the tangential restriction is $A|_T \coloneqq P_\perp A P_{u_{\mathrm{in}}^\perp}$. Then:
     \begin{equation}
         \rank(J_{\mathrm{SkipNorm}}(x)) = 1 + \rank(A|_T), \qquad \rank(J_{\mathrm{RMSNorm}, 0}(x)) = \rank(P_\perp A).
         \label{eq:rank_identities}
     \end{equation}
-    In particular, $\rank(J_{\mathrm{SkipNorm}}(x))$ depends on $\rank(A|_T)$ rather than $\rank(A)$: for $d_{\mathrm{in}} = d_{\mathrm{out}} = 2$ at $x = e_1$ with $u_{\mathrm{out}} = e_1$ and $A = \begin{psmallmatrix} 0 & 1 \\ 0 & 0 \end{psmallmatrix}$, we have $\rank(A) = 1$ yet $A|_T = 0$, yielding $\rank(J_{\mathrm{SkipNorm}}(e_1)) = 1 + 0 = 1 < 2$. Conversely, whenever $A \in \mathrm{GL}(d)$ is invertible ($d_{\mathrm{in}} = d_{\mathrm{out}} = d$), $\rank(A|_T) = d - 1$ so $\rank(J_{\mathrm{SkipNorm}}(x)) = d$, whereas $\rank(J_{\mathrm{RMSNorm}, 0}(x)) = d - 1$ and $\rank(J_{\mathrm{LayerNorm}, 0}(x)) = d - 2$.
+    Invertibility of $A$ alone does not imply full rank of SkipNorm. For example, take $x=e_1$, $f(\xi)=A\xi+(0,-1)^\top$, and $A=\begin{psmallmatrix}1&1\\1&0\end{psmallmatrix}$. Then $f(e_1)=e_1$, $A|_T=0$, and $J_{\mathrm{SkipNorm}}(e_1)=\begin{psmallmatrix}1&0\\1&0\end{psmallmatrix}$ has rank one despite $\det A=-1$. More generally, when $A\in\mathrm{GL}(d)$,
+    \begin{equation}
+        \rank J_{\mathrm{SkipNorm}}=d
+        \quad\Longleftrightarrow\quad
+        u_{\mathrm{in}}^\top A^{-1}u_{\mathrm{out}}\ne0.
+        \label{eq:full_rank_condition}
+    \end{equation}
+    If this scalar vanishes, the rank is $d-1$. For the same invertible branch, ideal gain-free RMSNorm has rank $d-1$ and LayerNorm has rank $d-2$ wherever the centered branch output is nonzero.
     \item[\textbf{(b)}] \textbf{Exact Spectrum of $\varepsilon$-Stabilized RMSNorm ($\varepsilon > 0$):} The primitive $\operatorname{RMSNorm}_\varepsilon(y) = \sqrt{d} \, y / \sqrt{\norm{y}_2^2 + d\varepsilon}$ has Jacobian
     \begin{equation}
         D_y \operatorname{RMSNorm}_\varepsilon(y) = \frac{\sqrt{d}}{\sqrt{r^2 + d\varepsilon}} (I_d - u u^\top) + \frac{d^{3/2} \varepsilon}{(r^2 + d\varepsilon)^{3/2}} u u^\top.
@@ -191,7 +188,12 @@ Let $y \in \R^d \setminus \{0\}$ with $r = \norm{y}_2 > 0$ and $u = y / r$. For 
 \end{enumerate}
 \end{proposition}
 
-Proposition~\ref{prop:stabilized_spectra}(b) explains why $\varepsilon$-stabilized RMSNorm still behaves as a strong radial damper in standard training regimes: at typical pre-normalization norm $r = \sqrt{d}$ with $\varepsilon = 10^{-5}$, the radial singular value is $\sigma_{\mathrm{rad}} \approx \varepsilon / (1 + \varepsilon)^{3/2} \approx 10^{-5} \ll 1$, attenuating radial gradients by five orders of magnitude per layer (Figure~\ref{fig:geometry}b,d). In float64 autodiff tests at $d = 16$ across $\varepsilon \in \{10^{-8}, 10^{-5}, 10^{-2}\}$ and $r \in [10^{-2}, 10^1]$, the analytical formulas in Eq.~\eqref{eq:rmsnorm_eps_sv} match numerical SVD values to maximum error $1.33 \times 10^{-13}$.
+The relative radial attenuation of the RMSNorm primitive is
+\begin{equation}
+    \frac{\sigma_{\mathrm{rad}}}{\sigma_{\mathrm{tan}}}
+    =\frac{d\varepsilon}{r^2+d\varepsilon}.
+\end{equation}
+At $r=\sqrt d$ and $\varepsilon=10^{-5}$, its absolute radial singular value is approximately $10^{-5}$. This is a local property of the primitive, not a universal per-layer decay rate after composition with nonlinear branches. In float64 autodiff tests at $d=16$ across $\varepsilon\in\{10^{-8},10^{-5},10^{-2}\}$ and $r\in[10^{-2},10^1]$, Eq.~\eqref{eq:rmsnorm_eps_sv} matches numerical SVD values to maximum error $1.33\times10^{-13}$.
 
 \subsection{Antipodal Sign-Flip Instability and Tangent-Projected Geodesic SkipNorm}
 
@@ -200,7 +202,7 @@ When building norm-preserving residual blocks on $\R^d$ ($d_{\mathrm{in}} = d_{\
     \operatorname{ProjResSkipNorm}_\alpha(x; f) \coloneqq \frac{x + \alpha f(x)}{\norm{x + \alpha f(x)}_2} \norm{x}_2.
     \label{eq:proj_res_skipnorm}
 \end{equation}
-While Eq.~\eqref{eq:proj_res_skipnorm} preserves $\norm{\hat{y}}_2 = \norm{x}_2$, decompose $f(x) = f_r(x) u_{\mathrm{in}} + f_\perp(x)$ into its radial component $f_r(x) = \inner{f(x), u_{\mathrm{in}}}$ and tangential component $f_\perp(x) = (I_d - u_{\mathrm{in}} u_{\mathrm{in}}^\top) f(x) \in T_x \Sp^{d-1}(\norm{x}_2)$. Whenever the radial component opposes $x$ strongly enough that $1 + \alpha f_r(x)/\norm{x}_2 < 0$ while $f_\perp(x) \to 0$, the numerator $x + \alpha f(x)$ crosses the origin and Eq.~\eqref{eq:proj_res_skipnorm} discontinuously flips to the antipode $\hat{y} \to -x$ (Figure~\ref{fig:geometry}c). Projecting $f(x)$ onto $T_x \Sp^{d-1}(\norm{x}_2)$ before spherical retraction defines \textbf{Geodesic SkipNorm}:
+Where its denominator is nonzero, Eq.~\eqref{eq:proj_res_skipnorm} preserves the input norm. Write $f(x)=f_r(x)u_{\mathrm{in}}+f_\perp(x)$ with $f_r(x)=\inner{f(x),u_{\mathrm{in}}}$ and $f_\perp(x)\perp x$. If $f_\perp(x)=0$, the update is $x$ when $\norm x_2+\alpha f_r(x)>0$, is $-x$ when this scalar is negative, and is undefined when it is zero. For nonzero $f_\perp(x)$, crossing into the opposite hemisphere is continuous, but the map approaches this sign discontinuity as the tangential component vanishes. Projecting out the radial component before normalization avoids the zero denominator and keeps the output in the input hemisphere:
 \begin{equation}
     \operatorname{GeodSkipNorm}_\alpha(x; f) \coloneqq \frac{x + \alpha f_\perp(x)}{\norm{x + \alpha f_\perp(x)}_2} \norm{x}_2, \qquad f_\perp(x) = f(x) - \frac{\inner{f(x), x}}{\norm{x}_2^2} x.
     \label{eq:geodesic_skipnorm}
@@ -208,7 +210,7 @@ While Eq.~\eqref{eq:proj_res_skipnorm} preserves $\norm{\hat{y}}_2 = \norm{x}_2$
 
 \begin{proposition}[Stability and First-Order Tangentiality of Geodesic SkipNorm]
 \label{prop:geodesic_skipnorm}
-For all $x \in \R^d \setminus \{0\}$, all $\alpha \in \R$, and all vector fields $f: \R^d \to \R^d$:
+For all $x \in \R^d \setminus \{0\}$, all $\alpha \in \R$, and vector fields $f: \R^d \to \R^d$ of class $C^1$ near $x$:
 \begin{enumerate}
     \item[\textbf{(a)}] \textbf{Strict Positivity and Antipodal Flip Elimination:} Because $\inner{f_\perp(x), x} = 0$, the denominator satisfies $\norm{x + \alpha f_\perp(x)}_2 = \sqrt{\norm{x}_2^2 + \alpha^2 \norm{f_\perp(x)}_2^2} \ge \norm{x}_2 > 0$, and the cosine similarity with the input is strictly positive:
     \begin{equation}
@@ -219,290 +221,233 @@ For all $x \in \R^d \setminus \{0\}$, all $\alpha \in \R$, and all vector fields
 \end{enumerate}
 \end{proposition}
 
-\section{Norm-Preserving Rollouts Without Post-Step Projection}
+\section{Conservation and Prediction on Discrete Nonlinear Schr\"odinger Dynamics}
 \label{sec:dnls}
 
-Before investigating latent invariant manifolds in autoencoders, we evaluate Geodesic SkipNorm as a direct state-space propagator on a physical partial differential equation whose discrete $L_2$ norm is an exact conserved quantity. A critical methodological requirement is that the reference numerical solver must \emph{never} apply post-step norm projection: any artificial renormalization in the training or test targets would conflate solver projection with model conservation.
-
-\paragraph{Benchmark Protocol (1D Discrete Nonlinear Schr\"odinger Equation).}
-We consider the focusing 1D periodic discrete nonlinear Schr\"odinger (DNLS) equation on an $M = 16$ lattice ($\psi_n(t) \in \mathbb{C}$, represented in real coordinates $x(t) = (\operatorname{Re}\psi, \operatorname{Im}\psi) \in \R^{32}$):
+We first separate conservation from predictive accuracy in a direct state-space experiment. On a periodic lattice of $16$ sites, the focusing discrete nonlinear Schr\"odinger equation is
 \begin{equation}
-    i \frac{d\psi_n}{dt} = -(\psi_{n+1} - 2\psi_n + \psi_{n-1}) - g_{\mathrm{nl}} \abs{\psi_n}^2 \psi_n, \qquad n \in \{1, \dots, 16\}, \quad \psi_{n+16} = \psi_n,
-    \label{eq:dnls_pde}
+ i\dot\psi_n=-(\psi_{n+1}-2\psi_n+\psi_{n-1})-|\psi_n|^2\psi_n,
+ \qquad \psi_{n+16}=\psi_n.
+ \label{eq:dnls_pde}
 \end{equation}
-with nonlinearity $g_{\mathrm{nl}} = 1.0$, conserved total wavepacket power $\mathcal{N}(\psi) = \sum_{n=1}^{16} \abs{\psi_n}^2 = \norm{x}_2^2$, and conserved Hamiltonian $\mathcal{H}(\psi) = \sum_n (\abs{\psi_{n+1} - \psi_n}^2 - \frac{g_{\mathrm{nl}}}{2}\abs{\psi_n}^4)$. We integrate 60 initial localized bright soliton wavepackets ($\mathcal{N}(\psi_0) \in [1.5, 4.5]$) over $T = 250$ macro-steps ($\Delta t = 0.04$, physical horizon $t_{\max} = 10.0$) using a $10\times$-substepped fourth-order Runge--Kutta solver ($\delta t = 0.004$) in float64 \emph{with zero post-step normalization}. Across all 60 trajectories and 250 macro-steps, the intrinsic numerical norm drift of the unprojected RK4 reference solver is at most $1.32 \times 10^{-11}$. We partition the dataset strictly by whole trajectories into 36 training, 12 validation, and 12 held-out test orbits.
+Writing $x=(\operatorname{Re}\psi,\operatorname{Im}\psi)\in\R^{32}$, the wave power $\mathcal N=\sum_n|\psi_n|^2=\norm{x}_2^2$ is conserved. The dataset contains localized wave packets with initial state norm in $[0.95,1.85]$, split into 28 training, 8 validation, and 12 test trajectories. Training trajectories contain 60 states; test trajectories contain 250 states, corresponding to 249 transitions at $\Delta t=0.04$ and a physical horizon of $9.96$. One test initial condition is a fixed illustrative packet; the remaining initial conditions use the recorded random generator. All initial states and split assignments are fixed before model training.
+
+Targets use float64 RK4 with ten substeps per recorded transition and no post-step normalization. An independent refinement over all 48 initial conditions gives maximum state-coordinate differences of $5.70\times10^{-10}$ between ten and twenty substeps, and $3.59\times10^{-11}$ between twenty and forty, a ratio of $15.9$. The ten-substep power drift is approximately $1.32\times10^{-11}$. These checks address reference discretization error separately from conservation built into the learned maps.
 
 \begin{table}[t]
 \centering
-\caption{\textbf{Five-seed 1D DNLS multi-step rollout benchmark ($d = 32$, 12 held-out test soliton wavepackets, 250 steps, no solver projection).} Models are trained with a 5-step rollout MSE loss across 5 random seeds (mean $\pm$ SD). Intrinsic unprojected $10\times$-RK4 reference solver norm drift is $1.32 \times 10^{-11}$.}
+\caption{DNLS results on 12 held-out trajectories, five training seeds. MSE@$H$ averages squared state error over coordinates, trajectories, and prediction steps $1$ through $H$. Entries are mean $\pm$ sample SD across seeds, except power drift, which is the worst relative power error over all test trajectories, steps, and seeds. Time is for a batch of all 12 trajectories and 249 transitions. Parameter counts include the learned step scalar.}
 \label{tab:dnls_results}
-\vspace{4pt}
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{lccccc}
-\toprule
-\textbf{Architecture} & \textbf{MSE@20} ($\downarrow$) & \textbf{MSE@50} ($\downarrow$) & \textbf{MSE@200} ($\downarrow$) & \textbf{Max Norm Drift} ($\downarrow$) & \textbf{250-Step Time (ms)} \\
-\midrule
-Geodesic SkipNorm & $0.00036 \pm 0.00001$ & $0.00257 \pm 0.00014$ & $0.06417 \pm 0.00236$ & $\mathbf{4.09 \times 10^{-15}}$ & $3.74 \pm 0.34$ \\
-Projected Residual SkipNorm & $0.00036 \pm 0.00001$ & $0.00254 \pm 0.00014$ & $0.06340 \pm 0.00238$ & $\mathbf{3.88 \times 10^{-15}}$ & $3.94 \pm 0.31$ \\
-State-Dependent $\mathrm{SO}(32)$ (Cayley) & $\mathbf{0.00021 \pm 0.00002}$ & $\mathbf{0.00134 \pm 0.00016}$ & $0.03546 \pm 0.00096$ & $\mathbf{3.08 \times 10^{-15}}$ & $27.55 \pm 0.90$ \\
-Linear Orthogonal $\mathrm{SO}(32)$ & $0.00043 \pm 0.00001$ & $0.00241 \pm 0.00004$ & $\mathbf{0.03485 \pm 0.00026}$ & $2.22 \times 10^{-14}$ & $\mathbf{2.73 \pm 0.17}$ \\
-\midrule
-Pre-RMSNorm Residual & $0.00087 \pm 0.00007$ & $0.00600 \pm 0.00041$ & $0.29810 \pm 0.03768$ & $39.20 \pm 5.18$ & $3.80 \pm 0.11$ \\
-Post-RMSNorm Residual & $0.57798 \pm 0.00011$ & $0.58874 \pm 0.00104$ & $0.79204 \pm 0.00780$ & $17.41 \pm 0.00$ & $3.92 \pm 0.26$ \\
-Unconstrained ResNet & $0.00040 \pm 0.00002$ & $0.00292 \pm 0.00027$ & $1.29241 \pm 0.45157$ & $387.04 \pm 130.52$ & $3.69 \pm 0.13$ \\
-\bottomrule
-\end{tabular}%
-}
+\resizebox{\textwidth}{!}{\input{generated/table_dnls.tex}}
 \end{table}
 
 \begin{figure}[t]
-    \centering
-    \includegraphics[width=\textwidth]{fig2_dnls_unitary_rollout.pdf}
-    \caption{\textbf{Unitary soliton wavepacket rollout on the focusing 1D discrete nonlinear Schr\"odinger (DNLS) equation ($d = 32$) without reference solver projection.}
-    \textbf{(a)} Spatiotemporal site density $\abs{\psi_{n,t}}^2$ of a held-out bright soliton wavepacket propagating across the lattice over 250 steps.
-    \textbf{(b)} Relative wavepacket power drift $\abs{\norm{\psi_t}_2^2 - \norm{\psi_0}_2^2}/\norm{\psi_0}_2^2$: Geodesic SkipNorm and $\mathrm{SO}(32)$ transitions maintain machine-precision conservation ($\sim 3\text{--}4 \times 10^{-15}$), below even the unprojected $10\times$-RK4 reference solver drift ($1.32 \times 10^{-11}$), whereas Pre-RMSNorm and Unconstrained ResNet drift by $\mathcal{O}(10^1\text{--}10^2)$ and Post-RMSNorm collapses immediately onto the fixed $\sqrt{d}$ sphere.
-    \textbf{(c)} Held-out state MSE versus rollout horizon across 5 random seeds (mean $\pm$ SD).
-    \textbf{(d)} Accuracy (MSE@50) versus 250-step rollout wall-clock time: Geodesic SkipNorm outperforms Unconstrained ResNet and Pre-RMSNorm Residual while running $7.4\times$ faster than state-dependent $\mathrm{SO}(32)$ Cayley steps.}
-    \label{fig:dnls}
+\centering
+\includegraphics[width=\textwidth]{fig2_dnls_unitary_rollout.pdf}
+\caption{Conservation and prediction on DNLS. (a) Reference density of the fixed held-out illustrative wave packet. (b) Relative power drift, averaged over test trajectories and training seeds; values below $10^{-16}$ are displayed at that plotting threshold. (c) Per-step state MSE, mean $\pm$ sample SD across five seeds. (d) Cumulative MSE@50 versus warm batch inference time. Timings compare the specified implementations and parameter budgets, not all possible orthogonal parameterizations.}
+\label{fig:dnls}
 \end{figure}
 
-\paragraph{Results and Analysis.}
-Table~\ref{tab:dnls_results} and Figure~\ref{fig:dnls} compare 7 architectures trained under an identical 5-step rollout MSE objective across 5 random seeds (2-layer MLP width 64, $\sim 6.3\text{k}$ parameters). Three findings stand out:
-\begin{enumerate}
-    \item \textbf{Machine-Precision Conservation Without Projection:} Geodesic SkipNorm and Projected Residual SkipNorm preserve $\norm{\psi_t}_2^2$ to $4.09 \times 10^{-15}$ and $3.88 \times 10^{-15}$ over 250 autoregressive steps---nearly four orders of magnitude tighter than the unprojected $10\times$-RK4 solver ($1.32 \times 10^{-11}$). In contrast, Post-RMSNorm resets $\norm{\psi_t}_2 = \sqrt{32}$ at step 1 (yielding $17.4\times$ relative norm error on low-energy wavepackets), while Pre-RMSNorm Residual and Unconstrained ResNet accumulate massive norm drift ($39.20$ and $387.04$) and diverge at long horizons ($\text{MSE@200} = 0.298$ and $1.292$ vs.\ $0.0642$ for Geodesic SkipNorm).
-    \item \textbf{Efficiency vs.\ State-Dependent $\mathrm{SO}(32)$ Cayley Maps:} Parameterizing a state-dependent orthogonal matrix $Q(x) = (I - S(x))(I + S(x))^{-1} \in \mathrm{SO}(32)$ requires solving a $32\times 32$ linear system at every step, increasing 250-step rollout latency by $7.4\times$ ($27.55\,\text{ms}$ vs.\ $3.74\,\text{ms}$ for Geodesic SkipNorm, which operates in $\mathcal{O}(d)$ vector arithmetic).
-    \item \textbf{Accuracy and Expressivity:} Geodesic SkipNorm achieves lower medium- and long-horizon error than both Unconstrained ResNet ($\text{MSE@50} = 0.00257$ vs.\ $0.00292$) and Pre-RMSNorm Residual ($0.00600$), and outperforms Linear Orthogonal $\mathrm{SO}(32)$ at short horizons ($\text{MSE@20} = 0.00036$ vs.\ $0.00043$) while retaining full nonlinear expressivity for strongly non-isometric coordinate systems (Sections~\ref{sec:foliation}--\ref{sec:torus}).
-\end{enumerate}
+All models use the same eight-step prediction objective, training windows, and 900 optimizer updates. The nonlinear branches have two hidden layers of width 96. The state-dependent orthogonal baseline predicts two $32\times4$ factors and applies a dense Cayley solve to their skew-symmetric product; it has more parameters than the vector-field models. The fixed linear orthogonal baseline is smaller. Table~\ref{tab:dnls_results} reports these budgets explicitly; full settings and timing procedures appear in Appendix~\ref{app:protocols}.
+
+The norm-preserving models maintain power near floating-point precision, as expected from their construction. This does not make their trajectories more accurate than the reference solver. The projected-residual and tangent-projected updates have similar prediction errors in this benchmark. The dense state-dependent Cayley model is more accurate at short and intermediate horizons but costs more per rollout; the linear orthogonal model is faster and has lower cumulative error at horizon 200 than Geodesic SkipNorm. The experiment therefore supports a computational trade-off, rather than a general accuracy advantage for the spherical retraction. The geometric exclusion of an antipodal flip in Proposition~\ref{prop:geodesic_skipnorm} is a separate property; it does not establish a performance advantage when such flips are absent from training.
 
 \section{Conditional Radial Foliation of Conserved Quantities}
 \label{sec:foliation}
 
-In general conservative systems (such as Lotka--Volterra population dynamics or anharmonic oscillators), the conserved quantity $I(x)$ is \emph{not} the Euclidean norm $\norm{x}_2$ in observed coordinates. Consider a dynamical autoencoder $(E, g, D)$ with encoder $E: \mathcal{M} \to \R^{d_z}$, norm-preserving latent transition $g: \R^{d_z} \to \R^{d_z}$ ($\norm{g(z)}_2 = \norm{z}_2$, implemented via Geodesic SkipNorm or $\mathrm{SO}(d_z)$), and decoder $D: \R^{d_z} \to \mathcal{M}$. We now state and prove the exact conditions under which intertwining the observed flow $\Phi_{\Delta t}$ with $g$ forces the latent radius $h(x) \coloneqq \norm{E(x)}_2$ to foliate the level sets of $I$.
+In general conservative systems (such as Lotka--Volterra population dynamics or anharmonic oscillators), the conserved quantity $I(x)$ is \emph{not} the Euclidean norm $\norm{x}_2$ in observed coordinates. Consider a dynamical autoencoder $(E, g, D)$ with encoder $E: \mathcal{M} \to \R^{d_z}$, norm-preserving latent transition $g: \R^{d_z} \to \R^{d_z}$ ($\norm{g(z)}_2 = \norm{z}_2$, implemented via Geodesic SkipNorm or $\mathrm{SO}(d_z)$), and decoder $D: \R^{d_z} \to \mathcal{M}$. We give sufficient conditions under which intertwining the observed flow $\Phi_{\Delta t}$ with $g$ forces the latent radius $h(x) \coloneqq \norm{E(x)}_2$ to foliate the level sets of $I$.
 
 \subsection{The Conditional Radial Foliation Theorem}
 
 \begin{theorem}[Conditional Radial Foliation of Connected Regular Level Sets]
 \label{thm:radial_foliation}
-Let $U \subseteq \R^N$ ($N \ge 2$) be an open domain and let $I \in C^1(U, \R)$ be a conserved quantity of a discrete-time flow map $\Phi_{\Delta t}: U \to U$ ($I \circ \Phi_{\Delta t} = I$). For $c \in (c_{\min}, c_{\max})$, denote the level set by $\mathcal{O}_c \coloneqq \{x \in U : I(x) = c\}$. Suppose an encoder $E: U \to \R^{d_z}$ ($d_z \ge 2$) and a latent map $g: \R^{d_z} \to \R^{d_z}$ satisfy:
+Let $U\subseteq\R^N$, $N\ge2$, be open, and let $I\in C^1(U,\R)$ satisfy $I\circ\Phi_{\Delta t}=I$ for a time-step map $\Phi_{\Delta t}:U\to U$. Let $J=(c_{\min},c_{\max})\subseteq I(U)$ and write $\mathcal O_c=I^{-1}(c)$. Suppose:
 \begin{enumerate}
-    \item[\textbf{(H1)}] \textbf{Exact Intertwining with a Norm-Preserving Map:} $E$ is continuous on $U$, $\norm{g(z)}_2 = \norm{z}_2$ for all $z \in E(U)$, and $E \circ \Phi_{\Delta t} = g \circ E$ on $U$.
-    \item[\textbf{(H2)}] \textbf{Connectedness and Topological Orbit Density:} For each $c \in (c_{\min}, c_{\max})$, $\mathcal{O}_c$ is connected and there exists $x_0 \in \mathcal{O}_c$ whose forward orbit $\{ \Phi_{\Delta t}^k(x_0) \}_{k \in \mathbb{N}}$ is dense in $\mathcal{O}_c$.
+    \item[\textbf{(H1)}] $E:U\to\R^{d_z}$ is continuous, $\norm{g(z)}_2=\norm z_2$ on $E(U)$, and $E\circ\Phi_{\Delta t}=g\circ E$ on $U$.
+    \item[\textbf{(H2)}] Each $c\in J$ is a regular value of $I$ and $\mathcal O_c$ is connected. There is a dense subset $J_*\subseteq J$ such that each $\mathcal O_c$, $c\in J_*$, contains a point with a dense forward orbit under the \emph{sampled map} $\Phi_{\Delta t}$.
 \end{enumerate}
 Then:
 \begin{enumerate}
-    \item[\textbf{(a)}] \textbf{Level-Set Radial Constancy (Arbitrary $d_z \ge 2$):} The latent radius $h(x) \coloneqq \norm{E(x)}_2$ is constant along every orbit, and by continuity and (H2) there exists a unique function $\psi: (c_{\min}, c_{\max}) \to \R_{\ge 0}$ such that
+    \item[\textbf{(a)}] \textbf{Radial constancy and continuity.} For arbitrary $d_z\ge1$, there is a unique continuous $\psi:J\to\R_{\ge0}$ such that
     \begin{equation}
-        \norm{E(x)}_2 = \psi(I(x)) \quad \forall x \in \bigcup_{c \in (c_{\min}, c_{\max})} \mathcal{O}_c, \qquad E(\mathcal{O}_c) \subseteq \Sp^{d_z - 1}(\psi(c)).
+        \norm{E(x)}_2=\psi(I(x))\quad(x\in I^{-1}(J)),\qquad
+        E(\mathcal O_c)\subseteq\Sp^{d_z-1}(\psi(c)).
         \label{eq:level_set_constancy}
     \end{equation}
-    If, in addition, every $c \in (c_{\min}, c_{\max})$ is a \textbf{regular value} of $I$ ($\nabla I(x) \neq 0$ on $\mathcal{O}_c$), then $I$ admits continuous local sections and $\psi: (c_{\min}, c_{\max}) \to \R_{\ge 0}$ is continuous.
-    \item[\textbf{(b)}] \textbf{Dimension-Matched Concentric Homeomorphism and Strict Monotonicity ($d_z = N$):} Assume further:
+    A radius-zero sphere here denotes the singleton $\{0\}$.
+    \item[\textbf{(b)}] \textbf{Dimension-matched identification.} Assume additionally:
     \begin{enumerate}
-        \item[\textbf{(H3)}] $d_z = N \ge 2$, every $c \in (c_{\min}, c_{\max})$ is a regular value of $I$ with $\mathcal{O}_c$ compact and connected, and $E: U \to \R^N$ is globally \textbf{injective} on $U$.
+        \item[\textbf{(H3)}] $d_z=N$, every $\mathcal O_c$ is compact, and $E$ is globally injective on $U$.
     \end{enumerate}
-    Then $\psi(c) > 0$ for all $c \in (c_{\min}, c_{\max})$, the restriction $E|_{\mathcal{O}_c}: \mathcal{O}_c \to \Sp^{N-1}(\psi(c))$ is a \textbf{homeomorphism onto the entire sphere} $\Sp^{N-1}(\psi(c))$, and $\psi: (c_{\min}, c_{\max}) \to \R_{>0}$ is a continuous, \textbf{strictly monotone} bijection onto an open interval $(\psi_{\min}, \psi_{\max}) \subseteq \R_{>0}$.
+    Then $\psi(c)>0$, each $E|_{\mathcal O_c}$ is a homeomorphism onto the entire sphere $\Sp^{N-1}(\psi(c))$, and $\psi$ is a strictly monotone homeomorphism from $J$ onto an open interval in $\R_{>0}$.
 \end{enumerate}
 \end{theorem}
 
-The complete proof is given in Appendix~\ref{app:foliation_proofs}. Briefly, part~(a) follows from $\norm{E(\Phi_{\Delta t}^k(x_0))}_2 = \norm{g^k(E(x_0))}_2 = \norm{E(x_0)}_2$ and continuity of $\norm{E(\cdot)}_2$ on the closure $\overline{\{\Phi_{\Delta t}^k(x_0)\}} = \mathcal{O}_c$, while continuity of $\psi$ follows from the Implicit Function Theorem local section $\sigma: (c-\delta, c+\delta) \to U$ ($I(\sigma(s)) = s \implies \psi(s) = \norm{E(\sigma(s))}_2$). In part~(b), each regular compact connected level set $\mathcal{O}_c$ is a closed $(N-1)$-manifold and $\Sp^{N-1}(\psi(c))$ is a connected $(N-1)$-manifold ($N \ge 2$); by Brouwer's Invariance of Domain \citep{brouwer1911beweis}, the continuous injective map $E|_{\mathcal{O}_c}$ has an image that is both open (invariance of domain) and closed (compactness of $\mathcal{O}_c$) in the connected sphere $\Sp^{N-1}(\psi(c))$, forcing $E(\mathcal{O}_c) = \Sp^{N-1}(\psi(c))$. Global injectivity of $E$ across distinct level sets $c_1 \neq c_2$ then guarantees $\Sp^{N-1}(\psi(c_1)) \cap \Sp^{N-1}(\psi(c_2)) = \emptyset \implies \psi(c_1) \neq \psi(c_2)$, and a continuous injective real function on an interval is strictly monotone.
+For $c\in J_*$, norm preservation and intertwining make $h=\norm{E(\cdot)}_2$ constant on a dense orbit, hence on its level set. Local sections of the submersion $I$ extend this constancy to every regular level and establish continuity of $\psi$. Under (H3), invariance of domain and compactness force each encoded level set to fill its target sphere; global injectivity then makes distinct levels have distinct radii. Appendix~\ref{app:foliation_proofs} gives the proof. The conclusion is strict monotonicity, with either orientation; an increasing orientation requires additional geometric information.
 
-\paragraph{Why Topological Orbit Density (H2) is Essential: The Resonant $1:1$ Oscillator Control.}
-Suppose $N = 4$ and a 4D phase space has a single scalar energy $H(q_1, p_1, q_2, p_2) = \frac{1}{2}(q_1^2 + p_1^2) + \frac{1}{2}(q_2^2 + p_2^2) = H_1 + H_2$, so each energy shell $\mathcal{O}_c \cong \Sp^3(\sqrt{2c})$ is compact, connected, and regular, \emph{but} every orbit is periodic ($1:1$ resonance) and therefore a 1D circle $\Sp^1$ that is \textbf{nowhere dense} in $\Sp^3(\sqrt{2c})$. Consider the analytical diffeomorphism $E(q_1, p_1, q_2, p_2) = (\sqrt{2}q_1, \sqrt{2}p_1, q_2, p_2)$ intertwined with the exact block-rotation $g \in \mathrm{SO}(4)$. As verified in Figure~\ref{fig:obstructions}c and Appendix~\ref{app:foliation_proofs}:
+The dense-label formulation accommodates isolated or lower-dimensional sets of resonant labels. For a periodic continuous-time orbit with period $T(c)$, density of the sampled orbit requires $\Delta t/T(c)\notin\mathbb Q$. Continuous-time orbit coverage alone is insufficient. We do not assume that every level of a nonisochronous oscillator satisfies this condition.
+
+\paragraph{A control without level-set orbit density.}
+Suppose $N = 4$ and a 4D phase space has a single scalar energy $H(q_1, p_1, q_2, p_2) = \frac{1}{2}(q_1^2 + p_1^2) + \frac{1}{2}(q_2^2 + p_2^2) = H_1 + H_2$, so each energy shell $\mathcal{O}_c \cong \Sp^3(\sqrt{2c})$ is compact, connected, and regular, \emph{but} every continuous-time orbit is periodic ($1:1$ resonance), and each sampled orbit is contained in a 1D circle $\Sp^1$ that is nowhere dense in $\Sp^3(\sqrt{2c})$. Consider the analytical diffeomorphism $E(q_1, p_1, q_2, p_2) = (\sqrt{2}q_1, \sqrt{2}p_1, q_2, p_2)$ intertwined with the exact block-rotation $g \in \mathrm{SO}(4)$. As verified in Figure~\ref{fig:obstructions}c and Appendix~\ref{app:foliation_proofs}:
 \begin{equation}
-    E \circ \Phi_{\Delta t} = g \circ E \;\; (\text{exact}), \qquad \CV_{\mathcal{O}}(h) = 4.17 \times 10^{-16} \;\; (\text{zero within-orbit wobble}),
+    E \circ \Phi_{\Delta t} = g \circ E \;\; (\text{exact}), \qquad \CV_{\mathcal{O}}(h) = 0 \;\; (\text{zero within-orbit wobble}),
 \end{equation}
-yet on the single energy shell $H = 1$, the encoded radius $\norm{E(x)}_2 = \sqrt{2 H_1 + 2 H} = \sqrt{2(1 + \eta)}$ varies continuously with the mode energy partition $\eta = H_1 / H \in [0, 1]$ from $\sqrt{2} \approx 1.414$ to $2.000$ (a $50\%$ relative spread across orbits on the same level set). Thus, without (H2), intertwining only forces $\norm{E(x)}_2$ to be an orbit invariant, not a function of $H$ alone.
+yet on the single energy shell $H = 1$, the encoded radius $\norm{E(x)}_2 = \sqrt{2 H_1 + 2 H} = \sqrt{2(1 + \eta)}$ varies continuously with the mode energy partition $\eta = H_1 / H \in [0, 1]$ from $\sqrt{2} \approx 1.414$ to $2.000$ (a nonzero spread across orbits on the same level set). Thus, without (H2), intertwining only forces $\norm{E(x)}_2$ to be an orbit invariant, not a function of $H$ alone.
 
-\subsection{Evaluation Metrics and Whole-Orbit Split Protocol}
+\subsection{Evaluation Metrics and Trajectory Splits}
 \label{sec:metrics}
 
-To evaluate empirical approximations of Theorem~\ref{thm:radial_foliation} without conflating transition preservation with encoder radial constancy, all radial foliation metrics are evaluated \textbf{strictly on encoded ground-truth test trajectories} $z_{m,t} = E(x_{m,t})$ ($m=1,\dots,M_{\mathrm{test}}$, $t=0,\dots,T-1$) rather than on latent rollouts $g^t(E(x_{m,0}))$ (which trivially have constant norm whenever $g$ is norm-preserving). Defining $r_{m,t} \coloneqq \norm{E(x_{m,t})}_2$, the per-orbit mean radius $\bar{r}_m \coloneqq \frac{1}{T}\sum_{t=0}^{T-1} r_{m,t}$, and within-orbit standard deviation $s_m \coloneqq \sqrt{\frac{1}{T}\sum_{t=0}^{T-1}(r_{m,t} - \bar{r}_m)^2}$, we report:
-\begin{enumerate}
-    \item \textbf{Within-Orbit Radial Coefficient of Variation ($\CV_{\mathcal{O}}(h)$):} $\CV_{\mathcal{O}}(h) \coloneqq \frac{1}{M_{\mathrm{test}}} \sum_{m=1}^{M_{\mathrm{test}}} \frac{s_m}{\bar{r}_m + \epsilon}$.
-    \item \textbf{Degenerate-Denominator-Guarded Orbit Variance Ratio ($\OVR$):} Let $\sigma_{\mathrm{lat}}^2 = \frac{1}{M_{\mathrm{test}} T}\sum_{m,t}\norm{z_{m,t} - \bar{z}}_2^2$ be the total latent variance. To prevent scale collapse ($\Var_m(\bar{r}_m) \to 0$) from masquerading as small ratio,
-    \begin{equation}
-        \OVR \coloneqq \begin{cases} \infty & \text{if } \Var_m(\bar{r}_m) < 10^{-4} \sigma_{\mathrm{lat}}^2, \\[2pt] \dfrac{\frac{1}{M_{\mathrm{test}}}\sum_{m=1}^{M_{\mathrm{test}}} s_m^2}{\Var_m(\bar{r}_m)} & \text{otherwise.} \end{cases}
-        \label{eq:ovr_def}
-    \end{equation}
-    \item \textbf{Monotone Foliation Fit (Isotonic $R^2$ and Spearman $\abs{\rho_S}$):} The out-of-sample $R^2$ of a 1D monotone (increasing or decreasing) isotonic regression fitted on $(\{c_j^{\mathrm{train}}\}, \{\bar{r}_j^{\mathrm{train}}\})$ and evaluated on held-out test orbits $(\{c_m^{\mathrm{test}}\}, \{\bar{r}_m^{\mathrm{test}}\})$, alongside the rank correlation $\abs{\rho_S(\{\bar{r}_m^{\mathrm{test}}\}, \{c_m^{\mathrm{test}}\})}$.
-\end{enumerate}
+All foliation metrics use encoded \emph{reference} trajectories $z_{m,t}=E(x_{m,t})$, not generated latent trajectories, whose norms are constrained by construction. For a scalar radius $r_{m,t}=\norm{z_{m,t}}_2$, write $\bar r_m=T^{-1}\sum_t r_{m,t}$ and $s_m^2=T^{-1}\sum_t(r_{m,t}-\bar r_m)^2$. We report the average within-trajectory coefficient of variation $M^{-1}\sum_m s_m/\max(\bar r_m,10^{-15})$, together with the within/total variance ratio
+\begin{equation}
+ W=\frac1M\sum_m s_m^2,\quad B=\Var_m(\bar r_m),\qquad
+ \OVR=\frac{W}{W+B}.
+ \label{eq:ovr_def}
+\end{equation}
+The training-centered latent scale is $\sigma_{\mathrm{lat}}^2=\mathbb E_{\mathrm{train}}\norm{z-\mathbb E_{\mathrm{train}}z}_2^2$. We mark OVR undefined when $\sigma_{\mathrm{lat}}=0$, or when either $B$ or $W+B$ is at most $(10^{-4}\sigma_{\mathrm{lat}})^2$. The component variances are saved with each run. CV near a zero mean is not a reliable identification measure; neither CV nor OVR alone establishes invariant recovery.
+
+For scalar foliation, isotonic regression estimates the forward calibration $c\mapsto\bar r$: its direction and knots are fitted on training trajectories only, then linearly interpolated at test labels, with constant boundary extension outside the training range. Test $R^2$ compares these predicted radii with test mean radii. This is a calibration of the foliation function, not an inverse readout of the physical invariant from an individual state. We separately report test Spearman $|\rho_S|$. For multiple invariants we fit a degree-two ridge readout from radii to the invariant vector, using training-only standardization and a fixed penalty $10^{-4}$. Test $R^2$ is never clipped to zero. Physical invariant labels enter these post-training evaluations only.
 
 \begin{table}[t]
 \centering
-\caption{\textbf{Five-seed Lotka--Volterra scalar invariant foliation benchmark (16 held-out whole test orbits, $T=180$).} All metrics are evaluated on encoded ground-truth test trajectories $z_t = E(x_t)$ across 5 random seeds (mean $\pm$ SD).}
+\caption{Lotka--Volterra evaluation on 16 held-out trajectories. All models predict over the same physical horizon $1.8$, with five-seed mean $\pm$ sample SD. Calib.\ $R^2$ predicts mean radius from the invariant using a training-fitted isotonic map. The projected-invariant baseline learns a scalar with an arbitrary offset; its CV is omitted because that gauge is not comparable to an encoder norm. Its OVR and calibration use that learned scalar.}
 \label{tab:lv_results}
-\vspace{4pt}
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{lccccc}
-\toprule
-\textbf{Model ($d_z = 2$)} & \textbf{Within-Orbit $\CV_{\mathcal{O}}(h)$} ($\downarrow$) & \textbf{Guarded $\OVR$} ($\downarrow$) & \textbf{Isotonic $R^2$} ($\uparrow$) & \textbf{Spearman $\abs{\rho_S}$} ($\uparrow$) & \textbf{Rollout MSE} ($\downarrow$) \\
-\midrule
-Geodesic SkipNorm (MLP) & $0.0265 \pm 0.0027$ & $0.0049 \pm 0.0012$ & $\mathbf{1.0000 \pm 0.0000}$ & $\mathbf{1.0000 \pm 0.0000}$ & $0.0028 \pm 0.0009$ \\
-Geodesic SkipNorm (Bijective) & $\mathbf{0.0135 \pm 0.0046}$ & $0.0019 \pm 0.0012$ & $\mathbf{1.0000 \pm 0.0000}$ & $\mathbf{1.0000 \pm 0.0000}$ & $0.0010 \pm 0.0004$ \\
-Projected Residual SkipNorm & $0.0148 \pm 0.0008$ & $0.0017 \pm 0.0002$ & $\mathbf{1.0000 \pm 0.0000}$ & $\mathbf{1.0000 \pm 0.0000}$ & $0.0003 \pm 0.0001$ \\
-State-Dependent $\mathrm{SO}(2)$ & $0.0141 \pm 0.0011$ & $\mathbf{0.0015 \pm 0.0002}$ & $\mathbf{1.0000 \pm 0.0000}$ & $\mathbf{1.0000 \pm 0.0000}$ & $\mathbf{0.0002 \pm 0.0000}$ \\
-\midrule
-COMET Baseline \citep{otto2023learning} & $0.3239 \pm 0.1658$ & $0.4949 \pm 0.2501$ & $\mathbf{1.0000 \pm 0.0000}$ & $0.9994 \pm 0.0012$ & $0.0003 \pm 0.0002$ \\
-Unconstrained Autoencoder & $0.1539 \pm 0.0061$ & $0.2196 \pm 0.0106$ & $\mathbf{1.0000 \pm 0.0000}$ & $\mathbf{1.0000 \pm 0.0000}$ & $\mathbf{0.0002 \pm 0.0000}$ \\
-\bottomrule
-\end{tabular}%
-}
+\resizebox{\textwidth}{!}{\input{generated/table_lv.tex}}
 \end{table}
 
 \begin{figure}[t]
-    \centering
-    \includegraphics[width=\textwidth]{fig3_scalar_foliation_lotka_volterra.pdf}
-    \caption{\textbf{Radial foliation of the conserved Lotka--Volterra Hamiltonian on held-out whole test orbits (Theorem~\ref{thm:radial_foliation}).}
-    \textbf{(a)} Observed test trajectories in log-population phase space $(u, v) = (\log x_1, \log x_2)$, where level sets of $I(u, v) = e^u - u + e^v - v - 2$ are strongly non-circular closed ovular contours.
-    \textbf{(b)} Encoded test trajectories $z_t = E(x_t)$ under Geodesic SkipNorm ($d_z = 2$), mapping each closed orbit onto a concentric circle $\Sp^1(\psi(c))$ (dotted reference circles).
-    \textbf{(c)} Normalized mean latent radius $\bar{r}_m / r_{\max}$ versus true Hamiltonian $c_m$ on the 16 held-out test orbits ($\pm 1\text{ SD}$ error bars reflect within-orbit radial fluctuation $s_m$): Geodesic SkipNorm achieves $\CV_{\mathcal{O}}(h) = 0.0135\text{--}0.0265$ and isotonic $R^2 = 1.0000$, whereas the Unconstrained AE exhibits $5.8\times\text{--}11.4\times$ larger within-orbit radial wobble ($\CV_{\mathcal{O}}(h) = 0.1539$).
-    \textbf{(d)} Five-seed comparison of within-orbit radial $\CV_{\mathcal{O}}(h)$ and held-out isotonic $R^2$.}
-    \label{fig:lv_foliation}
+\centering
+\includegraphics[width=\textwidth]{fig3_scalar_foliation_lotka_volterra.pdf}
+\caption{Scalar foliation on Lotka--Volterra test trajectories. (a) Reference trajectories in log-population coordinates, colored by the conserved Hamiltonian. (b) Seed-zero MLP encodings; dotted circles are mean-radius guides. Observed and encoded curves are sampled trajectories, trimmed to at most one revolution without adding closing segments. (c) Test mean radius versus invariant, scaled by each model's maximum test mean radius for display; error bars show within-trajectory SD. (d) Encoder radial CV across training seeds and training-fitted test radius-calibration $R^2$. These finite-data observations illustrate approximate foliation and do not certify the exact theorem's hypotheses.}
+\label{fig:lv_foliation}
 \end{figure}
 
-\paragraph{Lotka--Volterra 5-Seed Foliation Results.}
-We test Theorem~\ref{thm:radial_foliation} on Lotka--Volterra predator--prey dynamics in log-coordinates $(u, v) = (\log x_1, \log x_2) \in \R^2$, $\dot{u} = 1 - e^v$, $\dot{v} = e^u - 1$, whose conserved Hamiltonian $I(u, v) = e^u - u + e^v - v - 2 > 0$ has compact, connected, non-circular level sets surrounding the equilibrium $(0,0)$ (Figure~\ref{fig:lv_foliation}a). Using 80 full closed orbits ($T=180$, $\Delta t = 0.05$) split into 48 train, 16 validation, and 16 held-out test orbits, Table~\ref{tab:lv_results} and Figure~\ref{fig:lv_foliation} confirm that all four norm-preserving latent transitions (Geodesic SkipNorm with MLP or bijective RealNVP encoder, Projected Residual SkipNorm, and State-Dependent $\mathrm{SO}(2)$) map the non-circular observed contours onto concentric circles in $\R^2$ (Figure~\ref{fig:lv_foliation}b), achieving $\CV_{\mathcal{O}}(h) \in [0.0135, 0.0265]$, guarded $\OVR \in [0.0015, 0.0049]$, and held-out isotonic $R^2 = 1.0000$ ($\abs{\rho_S} = 1.0000$). Crucially, while an Unconstrained Autoencoder preserves coarse orbit ordering ($\abs{\rho_S} = 1.0000$), its encoded trajectories remain ovular with $5.8\times\text{--}11.4\times$ larger within-orbit radial wobble ($\CV_{\mathcal{O}}(h) = 0.1539$, $\OVR = 0.2196$; Figure~\ref{fig:lv_foliation}c).
+\paragraph{Lotka--Volterra experiment.}
+In log-population coordinates, $\dot u=1-e^v$, $\dot v=e^u-1$ preserves $I(u,v)=e^u-u+e^v-v-2$. Its positive level sets are compact, connected curves surrounding $(0,0)$. We use 32 training, 8 validation, and 16 test trajectories of 180 states at $\Delta t=0.05$. The norm-preserving autoencoders in Table~\ref{tab:lv_results} reduce radial variation relative to the unconstrained autoencoder, although a monotone mean-radius calibration can also be learned without imposing norm preservation. Reconstruction, prediction, radial constancy, and cross-level ordering are therefore distinct outcomes.
+
+The two-dimensional Geodesic models use a radius-dependent frequency network multiplying $(-z_2,z_1)$; this imposes phase-independent angular dynamics in addition to norm preservation. The other MLP transitions use general state-dependent vector fields, while the state-dependent orthogonal model predicts a Cayley matrix. We also include a trajectory-trained projected-invariant baseline inspired by COMET's gradient projection \citep{otto2023learning}. Its supervision, integrator, and regularization differ from the original method, so these results are not a reproduction of COMET. Architecture and loss details are given in Appendix~\ref{app:protocols}.
 
 \section{Topological Obstructions on Multi-Basin Phase Spaces}
 \label{sec:obstructions}
 
-What happens when the connectedness hypothesis (H2) of Theorem~\ref{thm:radial_foliation} is violated, as in a double-well Hamiltonian $H(q, p) = \frac{1}{2}p^2 - \frac{1}{2}q^2 + \frac{1}{4}q^4 + \gamma q$ at sub-barrier energies $c < c_{\mathrm{saddle}}$ where each level set $\mathcal{O}_c = \mathcal{O}_c^{(1)} \sqcup \mathcal{O}_c^{(2)}$ is the disjoint union of a left-well loop ($q < q_{\mathrm{saddle}}$) and a right-well loop ($q > q_{\mathrm{saddle}}$)?
+What happens when the connectedness hypothesis (H2) of Theorem~\ref{thm:radial_foliation} is violated, as in a double-well Hamiltonian $H(q, p) = \frac{1}{2}p^2 - \frac{1}{2}q^2 + \frac{1}{4}q^4 + \gamma q$ at regular energies above both well minima and below the saddle energy, where each level set $\mathcal{O}_c = \mathcal{O}_c^{(1)} \sqcup \mathcal{O}_c^{(2)}$ is the disjoint union of a left-well loop ($q < q_{\mathrm{saddle}}$) and a right-well loop ($q > q_{\mathrm{saddle}}$)?
 
-\begin{theorem}[Jordan--Brouwer Topological Obstruction on Disconnected Level Sets]
+\begin{theorem}[Jordan--Brouwer Obstruction for Disjoint Enclosed Basins]
 \label{thm:jordan_brouwer}
-Let $U \subseteq \R^N$ ($N \ge 2$) be an open domain containing two disjoint compact connected components $\mathcal{O}_{c_1}^{(1)}$ and $\mathcal{O}_{c_2}^{(2)}$, each homeomorphic to $\Sp^{N-1}$, such that their bounded Jordan--Brouwer interiors $\operatorname{Int}(\mathcal{O}_{c_1}^{(1)})$ and $\operatorname{Int}(\mathcal{O}_{c_2}^{(2)})$ in $\R^N$ are disjoint and contained in $U$. Let $E: U \to \R^N$ be any \textbf{continuous injective} map.
+Let $U\subseteq\R^N$, $N\ge2$, be open. Let $\Sigma_1,\Sigma_2\subset U$ be disjoint embedded copies of $\Sp^{N-1}$ with disjoint bounded complementary domains $B_1,B_2$ and $\overline B_1\cup\overline B_2\subset U$. If $E:U\to\R^N$ is continuous and injective, then
 \begin{enumerate}
-    \item[\textbf{(a)}] \textbf{No Simultaneous Origin-Enclosing Embedding:} By the Jordan--Brouwer Separation Theorem and Brouwer's Invariance of Domain, $E(\operatorname{Int}(\mathcal{O}_{c_1}^{(1)})) = \operatorname{Int}(E(\mathcal{O}_{c_1}^{(1)}))$ and $E(\operatorname{Int}(\mathcal{O}_{c_2}^{(2)})) = \operatorname{Int}(E(\mathcal{O}_{c_2}^{(2)}))$ are disjoint open topological balls in $\R^N$. Consequently, the latent origin $0 \in \R^N$ \textbf{cannot lie in the bounded interior of both} $E(\mathcal{O}_{c_1}^{(1)})$ and $E(\mathcal{O}_{c_2}^{(2)})$.
-    \item[\textbf{(b)}] \textbf{No Concentric Spherical Foliation:} No continuous injective encoder $E: U \to \R^N$ can map both $\mathcal{O}_{c_1}^{(1)}$ and $\mathcal{O}_{c_2}^{(2)}$ onto spheres centered at the origin ($\Sp^{N-1}(r_1)$ and $\Sp^{N-1}(r_2)$, whether $r_1 = r_2$ or $r_1 \neq r_2$), because every origin-centered sphere $\Sp^{N-1}(r)$ ($r > 0$) has $0$ in its bounded interior $B_N(0, r)$.
-    \item[\textbf{(c)}] \textbf{Consequences for Trained Autoencoders:} Any autoencoder $(E, g, D)$ on a multi-well phase space must exhibit at least one of three behaviors:
-    \begin{enumerate}
-        \item[\emph{(i)}] \emph{Origin-Pinned Bijective Regime:} If $E$ is globally injective and prevented from large off-origin translation, at least one well cannot enclose $0 \in \R^N$ and therefore cannot lie on an origin-centered sphere, forcing large within-orbit radial variation $\CV_{\mathcal{O}}(h) > 0$.
-        \item[\emph{(ii)}] \emph{Non-Injective Well-Folding Regime:} If $E$ is an unconstrained MLP, it can fold both wells onto concentric origin-enclosing spheres ($\norm{E(x)}_2 \approx \psi(H(x))$), achieving small $\CV_{\mathcal{O}}(h)$ at the cost of violating global injectivity ($E(\mathcal{O}_c^{(1)}) \cap E(\mathcal{O}_c^{(2)}) \neq \emptyset$) and collapsing cross-well separability.
-        \item[\emph{(iii)}] \emph{Off-Origin Translation Bypass:} An injective map $E_a(x) = a e_1 + \tilde{E}(x)$ shifted by $\norm{a e_1}_2 = a \gg R$ places both wells outside $0$ on a tiny patch of $\Sp^{N-1}(a)$, achieving $\CV_{\mathcal{O}}(h) = \mathcal{O}(a^{-1})$ and relative intertwining error $\mathcal{O}(a^{-1})$ trivially by collapsing relative radius variation across the dataset.
-    \end{enumerate}
+    \item[\textbf{(a)}] $E(B_i)$ is the bounded complementary domain of $E(\Sigma_i)$ for $i=1,2$, and these two domains are disjoint. In particular, both encoded boundaries cannot enclose the origin.
+    \item[\textbf{(b)}] $E(\Sigma_1)$ and $E(\Sigma_2)$ cannot both be origin-centered spheres, even with distinct radii. Equivalently, $\norm{E(\cdot)}_2$ cannot be constant on both boundaries.
 \end{enumerate}
 \end{theorem}
 
+For scalar periodic level curves in the plane, the theorem applies when both enclosed wells are included in the encoder domain. If exact intertwining and sampled-orbit density would force both boundaries to have constant encoded radius, they are incompatible with such a globally injective encoder. This is an exact obstruction, with no quantitative lower bound on finite-sample CV or prediction error.
+
+\paragraph{Encoder regimes and a translation control.}
+An unconstrained encoder can lose injectivity, whereas a bijective encoder can produce nonconstant radii or place the images away from the origin. These are possible behaviors, not an exhaustive classification or a theorem about training outcomes. Low CV alone cannot distinguish them. In particular, for trajectories in a compact set with $\norm x_2\le R$ and $\norm{\Phi_{\Delta t}(x)-x}_2\le D$, the injective translated encoder $E_a(x)=ae_1+x$, $a>R$, and identity transition $g(z)=z$ satisfy
+\begin{equation}
+    \CV_{\mathcal O}(\norm{E_a}_2)\le\frac{R}{a-R},\qquad
+    \frac{\norm{E_a(\Phi_{\Delta t}(x))-g(E_a(x))}_2}{\norm{E_a(x)}_2}\le\frac{D}{a-R}.
+    \label{eq:translated_control}
+\end{equation}
+Here CV uses the standard deviation under an empirical or population probability measure on the trajectory. Both quantities can approach zero while the absolute prediction displacement remains unchanged. The images lie near a sphere of large radius, not exactly on it; the bound does not contradict Theorem~\ref{thm:jordan_brouwer}.
+
+
+
 \begin{table}[t]
 \centering
-\caption{\textbf{Five-seed Double-Well Jordan--Brouwer obstruction benchmark across three sub-barrier regimes (Theorem~\ref{thm:jordan_brouwer}).} ``BothEnclose0'' denotes the fraction of seeds in which both left- and right-well encoded test loops enclose $0 \in \R^2$; ``Well-Sep Acc'' is linear probe accuracy separating left vs.\ right wells from latent radius $\bar{r}_m$.}
+\caption{Double-well controls, five-seed mean $\pm$ sample SD. ``Both'' is the percentage of seeds with at least one left and one right test polygon enclosing the origin, evaluated across all 16 test curves; it is not a certificate of global injectivity. Global and within-well $R^2$ are training-fitted radius calibrations, with the latter averaged equally across wells; well-probe accuracy uses a radius threshold and orientation selected on training data. The reflection-quotient control uses a different reconstruction task and is evaluated only for symmetric potentials.}
 \label{tab:double_well_results}
-\vspace{4pt}
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{llccccc}
-\toprule
-\textbf{Sub-Barrier Regime} & \textbf{Encoder Class ($d_z=2$)} & \textbf{BothEnclose0} & \textbf{Radial $\CV_{\mathcal{O}}(h)$} & \textbf{Within-Well $R^2$} & \textbf{Global $R^2$} & \textbf{Well-Sep Acc} \\
-\midrule
-\multirow{3}{*}{Balanced ($50{:}50$, $\gamma=0$)}
-  & Origin-Pinned Bijective & $\mathbf{0.00}$ & $0.2814 \pm 0.0472$ & $1.0000 \pm 0.0000$ & $0.9163 \pm 0.0725$ & $0.750 \pm 0.056$ \\
-  & Well-Folding MLP & $1.00$ & $\mathbf{0.0812 \pm 0.0253}$ & $1.0000 \pm 0.0000$ & $\mathbf{0.9710 \pm 0.0219}$ & $0.625 \pm 0.040$ \\
-  & Free-Shift Bijective & $\mathbf{0.00}$ & $0.1183 \pm 0.0365$ & $0.9613 \pm 0.0774$ & $0.7145 \pm 0.1597$ & $\mathbf{0.850 \pm 0.146}$ \\
-\midrule
-\multirow{3}{*}{Imbalanced ($80{:}20$, $\gamma=0$)}
-  & Origin-Pinned Bijective & $\mathbf{0.00}$ & $0.2446 \pm 0.0439$ & $0.9985 \pm 0.0029$ & $0.8229 \pm 0.1059$ & $0.812 \pm 0.079$ \\
-  & Well-Folding MLP & $0.80$ & $\mathbf{0.1003 \pm 0.0258}$ & $1.0000 \pm 0.0000$ & $\mathbf{0.8888 \pm 0.1631}$ & $0.688 \pm 0.112$ \\
-  & Free-Shift Bijective & $\mathbf{0.00}$ & $0.1257 \pm 0.0221$ & $0.9981 \pm 0.0038$ & $0.6606 \pm 0.0879$ & $\mathbf{0.875 \pm 0.079}$ \\
-\midrule
-\multirow{3}{*}{Tilted ($\gamma = 0.08$)}
-  & Origin-Pinned Bijective & $\mathbf{0.00}$ & $0.2369 \pm 0.0209$ & $0.9999 \pm 0.0003$ & $0.8962 \pm 0.0528$ & $0.850 \pm 0.075$ \\
-  & Well-Folding MLP & $1.00$ & $\mathbf{0.0846 \pm 0.0472}$ & $0.9991 \pm 0.0017$ & $\mathbf{0.9614 \pm 0.0228}$ & $0.713 \pm 0.073$ \\
-  & Free-Shift Bijective & $\mathbf{0.00}$ & $0.1262 \pm 0.0268$ & $0.9265 \pm 0.1456$ & $0.7938 \pm 0.0725$ & $\mathbf{0.875 \pm 0.056}$ \\
-\bottomrule
-\end{tabular}%
-}
+\resizebox{\textwidth}{!}{\input{generated/table_double_well.tex}}
 \end{table}
 
 \begin{figure}[t]
-    \centering
-    \includegraphics[width=\textwidth]{fig4_topological_obstructions_and_controls.pdf}
-    \caption{\textbf{Topological obstructions and analytical controls (Theorem~\ref{thm:radial_foliation} and Theorem~\ref{thm:jordan_brouwer}).}
-    \textbf{(a)} Bijective RealNVP encoder on sub-barrier Double-Well orbits: exactly as proved by Theorem~\ref{thm:jordan_brouwer}(a), the disjoint left-well (blue solid) and right-well (orange dashed) image loops cannot both enclose the latent origin $0 \in \R^2$ (\texttt{BothEnclose0 = 0.00} across all 15 bijective runs).
-    \textbf{(b)} Normalized mean radius $\bar{r}_m/r_{\max}$ versus sub-barrier energy $H(q, p)$: the unconstrained Well-Folding MLP folds both wells around $0$ so their radii overlap at identical energies, whereas the bijective encoder separates the two basins at the cost of non-circular off-origin distortion.
-    \textbf{(c)} Resonant $1:1$ 2D harmonic oscillator control in $\R^4$: exact $\mathrm{SO}(4)$ intertwining yields $\CV_{\mathcal{O}}(h) = 4.2 \times 10^{-16}$, yet lack of topological orbit density on $H=1$ produces a $50\%$ radius spread across mode partitions $\eta = H_1 / (H_1 + H_2)$.
-    \textbf{(d)} Translated identity encoder control $E_a(x) = a e_1 + x, g(z) = z$: both within-orbit $\CV_{\mathcal{O}}(h)$ and relative intertwining error decay as $\mathcal{O}(a^{-1})$ strictly by moving the dataset off the origin.}
-    \label{fig:obstructions}
+\centering
+\includegraphics[width=\textwidth]{fig4_topological_obstructions_and_controls.pdf}
+\caption{Obstructions and controls. (a) Encoded test segments from a bijective double-well model. (b) Mean radii from the bijective encoder and an explicitly reflection-invariant quotient encoder on the symmetric potential. The latter's noninjectivity is imposed, rather than inferred from radius overlap. (c) The exact linear resonance control has constant radius along each orbit but radii ranging from $\sqrt2$ to $2$ on the same energy shell. (d) For the translated identity encoder, small CV and relative intertwining error arise without informative decoded dynamics.}
+\label{fig:obstructions}
 \end{figure}
 
-Table~\ref{tab:double_well_results} and Figure~\ref{fig:obstructions}a,b,d verify all three regimes of Theorem~\ref{thm:jordan_brouwer} across 5 seeds and three sub-barrier configurations (Balanced $50{:}50$, Imbalanced $80{:}20$, and Tilted $\gamma = 0.08$ where left/right wells occupy distinct energy intervals). Across all $3 \times 2 \times 5 = 30$ bijective RealNVP runs (\texttt{Origin-Pinned} and \texttt{Free-Shift}), the fraction of runs in which both wells enclose $0 \in \R^2$ is \textbf{identically $0.00$} (Figure~\ref{fig:obstructions}a), forcing $\CV_{\mathcal{O}}(h) \in [0.237, 0.281]$ when origin-pinned. Conversely, the unconstrained \texttt{Well-Folding MLP} folds both wells around $0$ (\texttt{BothEnclose0} $= 0.80\text{--}1.00$), reducing $\CV_{\mathcal{O}}(h)$ to $0.081\text{--}0.100$ (Figure~\ref{fig:obstructions}b) by sacrificing global injectivity (\texttt{Well-Sep Acc} drops from $0.850$ to $0.625$). Finally, Figure~\ref{fig:obstructions}d verifies the analytical translated-encoder control $E_a(x) = a e_1 + x$ with identity latent map $g(z) = z$ (Appendix~\ref{app:obstruction_proofs}): as $a$ increases from $2$ to $10^4$, $\CV_{\mathcal{O}}(h)$ decays as $\mathcal{O}(a^{-1})$ down to $2.10 \times 10^{-5}$, confirming why the guarded $\OVR$ metric in Eq.~\eqref{eq:ovr_def} and origin-centering constraints are essential.
+The double-well experiments use $H(q,p)=p^2/2-q^2/2+q^4/4+\gamma q$. We compare a bijective coupling encoder centered at the origin with a free-offset bijective encoder under balanced and imbalanced sampling for $\gamma=0$, and under a tilted potential $\gamma=0.08$. In the symmetric cases we additionally construct an even encoder
+\begin{equation}
+ E_{\mathrm{quot}}(x)=\tfrac12\bigl(A_\theta(x)+A_\theta(-x)\bigr)-A_\theta(0),
+ \qquad E_{\mathrm{quot}}(x)=E_{\mathrm{quot}}(-x),
+\end{equation}
+and reconstruct only up to the equivalence $x\sim-x$. This control demonstrates how discarding the basin label changes the representation problem; it does not establish spontaneous folding under an ordinary reconstruction objective. Reflection is not a symmetry of the tilted Hamiltonian, so the quotient control is omitted there. A radius-only well probe measures separability in that scalar statistic, not in the full latent vector. Table~\ref{tab:double_well_results} reports finite-trajectory diagnostics; the theorem itself supplies no numerical CV floor. In the tilted case, the free-shift encoder has radial CV $0.0615\pm0.025$, yet its global calibration is only $R^2=0.232\pm0.24$. Within-well calibration remains high, illustrating how separately ordered basin coordinates need not define a single well-calibrated radius function of energy. The imbalanced free-shift model has negative mean global calibration $R^2$; these failures are retained.
 
 \section{Toroidal Generalization: $K$-Block SkipNorm on $\bigoplus_{k=1}^K \R^{d_k}$}
 \label{sec:torus}
 
-An integrable system with $K \ge 2$ independent commuting invariants $I = (I_1, \dots, I_K): U \to \R^K$ has compact regular joint level sets $\mathcal{O}_c = \{x \in U : I(x) = c\}$ diffeomorphic to the $K$-torus $\Tor^K = (\Sp^1)^K$ by the Liouville--Arnold theorem \citep{arnold1989mathematical}. A single spherical SkipNorm layer preserves only the total Euclidean norm $\norm{z}_2 = \sqrt{\sum_{k=1}^K \norm{z^{(k)}}_2^2}$, which projects the $K$-dimensional invariant vector $c \in \R^K$ onto a 1D scalar radius and cannot separate $\Tor^K$ foliations. To match the toroidal topology $\Tor^K$, we partition the latent space into $K$ orthogonal blocks $z = (z^{(1)}, \dots, z^{(K)}) \in \bigoplus_{k=1}^K \R^{d_k}$ ($d_k \ge 2$) and apply \textbf{$K$-Block Toroidal Geodesic SkipNorm} independently to each block:
+A compact connected regular common level set of $K$ independent commuting integrals in a $2K$-dimensional Hamiltonian system is a torus under the Liouville--Arnold hypotheses \citep{arnold1989mathematical}. The results below assume the torus fibers directly and do not require Hamiltonian dynamics or canonical observations. Preserving one total norm supplies one scalar invariant; it does not prevent invariant tori from being embedded inside a sphere. For multiple architectural invariants, partition the latent state into $K$ blocks:
 \begin{equation}
-    g_{\mathrm{block}}(z) \coloneqq \left( \operatorname{GeodSkipNorm}_{\alpha_1}\!\big(z^{(1)}; f^{(1)}(z)\big), \, \dots, \, \operatorname{GeodSkipNorm}_{\alpha_K}\!\big(z^{(K)}; f^{(K)}(z)\big) \right),
+    g_{\mathrm{block}}(z)\coloneqq
+    \left(\operatorname{GeodSkipNorm}_{\alpha_k}(z^{(k)};f^{(k)}(z))\right)_{k=1}^K.
     \label{eq:kblock_skipnorm}
 \end{equation}
-where each branch $f^{(k)}(z)$ depends on the full latent state $z$ (capturing nonlinear inter-mode frequency coupling), while its spherical retraction preserves each block radius $\rho_k(z) \coloneqq \norm{z^{(k)}}_2$ individually: $\rho_k(g_{\mathrm{block}}(z)) = \rho_k(z)$ for all $k \in \{1, \dots, K\}$.
+Each branch may depend on the full state. On nonzero blocks the update preserves every $\rho_k(z)=\norm{z^{(k)}}_2$; zero blocks may be assigned zero output. Blocks of dimensions $d_k$ preserve a product of spheres $\prod_k\Sp^{d_k-1}(\rho_k)$. The toroidal identification theorem specifically uses $d_k=2$ for every block.
 
-\begin{theorem}[Single-Sphere Non-Identifiability and $K$-Block Action Recovery on $\Tor^K$]
+\begin{theorem}[Scalar Non-Identifiability and Planar-Block Toroidal Foliation]
 \label{thm:toroidal_kblock}
-Let $I = (I_1, \dots, I_K) \in C^1(U, \R^K)$ ($K \ge 2$) be $K$ functionally independent invariants of $\Phi_{\Delta t}: U \to U$ whose regular level sets $\mathcal{O}_c = I^{-1}(c)$ ($c \in \Omega \subseteq \R^K$ open) are compact, connected $K$-tori $\Tor^K$ carrying dense quasi-periodic orbits.
+Let $U\subseteq\R^{2K}$ and $\Omega\subseteq\R^K$ be nonempty open sets, with $K\ge2$. Let $\Phi_{\Delta t}:U\to U$, and let $I:U\to\Omega$ be a surjective $C^1$ submersion satisfying $I\circ\Phi_{\Delta t}=I$. Suppose each fiber $\mathcal O_c=I^{-1}(c)$ is a compact connected $K$-torus, and for a dense subset $\Omega_*\subseteq\Omega$ each fiber has a dense forward orbit under $\Phi_{\Delta t}$. Let $E$ be continuous and satisfy exact intertwining with the specified latent transition.
 \begin{enumerate}
-    \item[\textbf{(a)}] \textbf{Single-Sphere Information Bottleneck ($K = 1$):} Under any continuous encoder $E: U \to \R^{d_z}$ intertwined with a single-sphere norm-preserving map ($\norm{g(z)}_2 = \norm{z}_2$), the total radius $\norm{E(x)}_2 = \psi(I(x))$ is a scalar function of $c \in \Omega \subseteq \R^K$. By the Rank Theorem, for every regular value of $\psi$, the preimage $\psi^{-1}(r) \subset \Omega$ is a $(K-1)$-dimensional submanifold of distinct action vectors $c \neq c'$ assigned the \textbf{identical} latent radius $r$, so no readout from $\norm{E(x)}_2$ can recover $c \in \R^K$. Furthermore, since $\pi_1(\Tor^K) \cong \mathbb{Z}^K$ whereas $\pi_1(\Sp^{N-1}) = 0$ for $N \ge 3$, $\Tor^K$ cannot embed homeomorphically onto $\Sp^{N-1}$.
-    \item[\textbf{(b)}] \textbf{$K$-Block Toroidal Foliation on $\bigoplus_{k=1}^K \R^2$:} Suppose $E = (E^{(1)}, \dots, E^{(K)}): U \to \bigoplus_{k=1}^K \R^2$ intertwines $\Phi_{\Delta t}$ with a $K$-block norm-preserving map $g_{\mathrm{block}}$ ($\norm{g_{\mathrm{block}}^{(k)}(z)}_2 = \norm{z^{(k)}}_2$). By Theorem~\ref{thm:radial_foliation}(a) applied to each block norm $\rho_k(E(x)) = \norm{E^{(k)}(x)}_2$, there exists a continuous map $\Psi = (\psi_1, \dots, \psi_K): \Omega \to \R_{\ge 0}^K$ such that
+    \item[\textbf{(a)}] \textbf{One scalar radius cannot identify all invariant labels.} If $g$ preserves the total norm, then $\norm{E(x)}_2=\psi(I(x))$ for a continuous $\psi:\Omega\to\R_{\ge0}$. This map cannot be injective, so no readout from the total radius can recover every label in $\Omega$ exactly. This conclusion places no universal upper bound on statistical readout $R^2$.
+    \item[\textbf{(b)}] \textbf{Identification by $K$ planar block radii.} Suppose $E:U\to\bigoplus_{k=1}^K\R^2$ is globally injective and $g$ preserves each block norm. Then there is a continuous map $\Psi:\Omega\to\R_{>0}^K$ such that
     \begin{equation}
-        \bm{\rho}(E(x)) \coloneqq \big(\norm{E^{(1)}(x)}_2, \dots, \norm{E^{(K)}(x)}_2\big) = \Psi(I(x)) \quad \forall x \in \bigcup_{c \in \Omega} \mathcal{O}_c, \qquad E(\mathcal{O}_c) \subseteq \prod_{k=1}^K \Sp^1(\psi_k(c)).
+        \bm\rho(E(x))=\Psi(I(x)),\qquad
+        E(\mathcal O_c)=\prod_{k=1}^K\Sp^1(\psi_k(c)).
         \label{eq:toroidal_foliation}
     \end{equation}
-    If $E$ is an injective immersion on $U$ with $\psi_k(c) > 0$, then $E|_{\mathcal{O}_c}: \mathcal{O}_c \to \prod_{k=1}^K \Sp^1(\psi_k(c)) \cong \Tor^K$ is a homeomorphism onto the poly-circle and $\Psi: \Omega \to \Psi(\Omega) \subseteq \R_{>0}^K$ is a continuous injective coordinate chart that uniquely identifies the full invariant vector $c = (I_1(x), \dots, I_K(x))$ up to a $C^0$ homeomorphism on $\R^K$.
+    Each restricted encoder is a homeomorphism onto this product of circles, and $\Psi$ is a homeomorphism onto its open image in $\R_{>0}^K$. Thus the vector of block radii identifies the invariant labels up to a continuous change of coordinates.
 \end{enumerate}
 \end{theorem}
 
+The proof in Appendix~\ref{app:obstruction_proofs} first extends radial constancy from the dense set of labels using local sections. Global injectivity excludes zero block radii, and invariance of domain gives surjectivity on each product of circles and invertibility of $\Psi$. No differentiability of $E$ or $\Psi$ is needed. These coordinates need not equal canonical actions, and the result does not guarantee that a chosen finite-capacity readout can invert them. The scalar limitation concerns recovery from the total radius alone: even a single-sphere model can represent a torus, for example through the Clifford embedding $(\theta_1,\ldots,\theta_K)\mapsto K^{-1/2}(\cos\theta_1,\sin\theta_1,\ldots,\cos\theta_K,\sin\theta_K)$ into $\Sp^{2K-1}$.
+
+
 \begin{table}[t]
 \centering
-\caption{\textbf{Five-seed 4D Coupled Nonlinear Oscillator ($K=2$) toroidal invariant identification benchmark (20 held-out test orbits on $\Tor^2$, $T=120$).} ``1-Scalar Readout $R^2$'' predicts $(I_1, I_2)$ from total norm $\norm{\bar{\bm{\rho}}}_2 \in \R$; ``2-Block Readout $R^2$'' predicts $(I_1, I_2)$ from the 2D block-radius vector $(\bar{\rho}_1, \bar{\rho}_2) \in \R^2$.}
+\caption{Two-invariant oscillator experiment: 20 held-out trajectories, five-seed mean $\pm$ sample SD. Total and block CV use encoded reference trajectories. Scalar and two-block $R^2$ use training-fitted degree-two ridge readouts of $(I_1,I_2)$; negative scores are retained. The radius-frequency (RF) and general-vector-field (VF) two-block models distinguish the architectural frequency prior from blockwise norm preservation. Rollout MSE covers the same physical horizon $2.88$ for all models.}
 \label{tab:torus_results}
-\vspace{4pt}
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{lcccc}
-\toprule
-\textbf{Architecture ($d_z = 4 = 2 \oplus 2$)} & \textbf{Block Radial $\CV_{\mathcal{O}}$} ($\downarrow$) & \textbf{1-Scalar Readout $R^2$} & \textbf{2-Block Readout $R^2$} ($\uparrow$) & \textbf{Rollout MSE} ($\downarrow$) \\
-\midrule
-2-Block Toroidal Geodesic SkipNorm ($K=2$) & $\mathbf{0.0187 \pm 0.0029}$ & $0.1461 \pm 0.0209$ & $\mathbf{0.9993 \pm 0.0002}$ & $\mathbf{0.0018 \pm 0.0005}$ \\
-Single-Sphere Geodesic SkipNorm ($K=1$) & $0.3213 \pm 0.0566$ & $0.1750 \pm 0.0176$ & $0.5199 \pm 0.2966$ & $0.0031 \pm 0.0011$ \\
-Unconstrained Autoencoder ($d_z=4$) & $0.3529 \pm 0.0285$ & $0.1590 \pm 0.0074$ & $0.3263 \pm 0.2121$ & $0.0025 \pm 0.0008$ \\
-\bottomrule
-\end{tabular}%
-}
+\resizebox{\textwidth}{!}{\input{generated/table_torus.tex}}
 \end{table}
 
 \begin{figure}[t]
-    \centering
-    \includegraphics[width=\textwidth]{fig5_toroidal_kblock_foliation.pdf}
-    \caption{\textbf{Multi-invariant toroidal foliation on 4D coupled nonlinear oscillators ($K = 2$, Theorem~\ref{thm:toroidal_kblock}).}
-    \textbf{(a)} Observed coordinate norms along a single quasi-periodic test trajectory on $\Tor^2$: nonlinear cubic mixing causes both pair norms $\norm{(x_1, x_2)}_2, \norm{(x_3, x_4)}_2$ and the total norm $\norm{x_t}_2$ to oscillate by $>40\%$.
-    \textbf{(b)} Encoded latent block radii $\norm{z_t^{(1)}}_2, \norm{z_t^{(2)}}_2$ along true test trajectories $z_t = E(x_t)$: 2-Block Toroidal Geodesic SkipNorm ($K=2$) flattens both block radii into time-invariant constants ($\CV_{\mathcal{O}} = 0.0187$), whereas the Unconstrained AE exhibits severe intra-orbit wobble ($\CV_{\mathcal{O}} = 0.3529$).
-    \textbf{(c)} Held-out test orbits in the true action plane $(I_1, I_2)$ colored by single total radius $\norm{\bar{\bm{\rho}}}_2$: level contours of $\norm{\bar{\bm{\rho}}}_2$ are 1D curves in $\R^2$ that cannot separate $(I_1, I_2)$ (Theorem~\ref{thm:toroidal_kblock}(a)).
-    \textbf{(d)} Held-out $(I_1, I_2)$ readout $R^2$ across 5 seeds: 1-scalar readout from $\norm{z}_2$ is capped below the $0.50$ projection ceiling for all models, whereas 2-block readout from $(\bar{\rho}_1, \bar{\rho}_2)$ under 2-Block Toroidal Geodesic SkipNorm achieves $R^2 = 0.9993 \pm 0.0002$.}
-    \label{fig:torus}
+\centering
+\includegraphics[width=\textwidth]{fig5_toroidal_kblock_foliation.pdf}
+\caption{Toroidal representation experiment. (a) Observed coordinate norms along a test trajectory. (b) Encoded planar block radii along reference trajectories for the radius-frequency two-block model and unconstrained baseline. (c) True test invariant labels colored by the time-mean total latent radius. (d) Test readout $R^2$ from one total radius or two block radii, with sample SD across five seeds, including the general-vector-field ablation. There is no universal statistical $R^2$ ceiling for a scalar readout; the theorem concerns exact identification over an open invariant domain.}
+\label{fig:torus}
 \end{figure}
 
-\paragraph{4D Coupled Nonlinear Oscillator Benchmark ($K = 2$).}
-We test Theorem~\ref{thm:toroidal_kblock} on a 4D system with two hidden action invariants $(I_1, I_2) \in [0.3, 1.5]^2$ and incommensurate nonlinear frequencies $\omega_1(I) = 1.0 + 0.35 I_1 + 0.15 I_2$, $\omega_2(I) = \sqrt{2} + 0.20 I_1 + 0.40 I_2$, observed through a smooth nonlinear diffeomorphism $x = \Phi_{\mathrm{mix}}(u) \in \R^4$ whose coordinate norms fluctuate by $>40\%$ along every orbit (Figure~\ref{fig:torus}a; full equations in Appendix~\ref{app:protocols}). Across 100 whole orbits split into 60 train, 20 validation, and 20 held-out test orbits (5 seeds), Table~\ref{tab:torus_results} and Figure~\ref{fig:torus} confirm both parts of Theorem~\ref{thm:toroidal_kblock}:
-\begin{enumerate}
-    \item \textbf{Verification of the Single-Scalar Ceiling (Theorem~\ref{thm:toroidal_kblock}(a)):} Predicting $(I_1, I_2) \in \R^2$ from any single scalar radius $\norm{z}_2 \in \R$ is upper-bounded by the 1D projection ceiling ($\le 0.50$), yielding $R^2 \in [0.146, 0.175]$ across all models (Figure~\ref{fig:torus}c,d). Moreover, Single-Sphere Geodesic SkipNorm ($K=1$) only constrains $\rho_1^2 + \rho_2^2$, allowing energy to slosh between the two 2D subspaces (\texttt{Block CV} $= 0.3213$, 2-Block Readout $R^2 = 0.520 \pm 0.297$).
-    \item \textbf{2-Block Toroidal Action Recovery (Theorem~\ref{thm:toroidal_kblock}(b)):} 2-Block Toroidal Geodesic SkipNorm ($K=2$) drives within-orbit block radial variation down to $\CV_{\mathcal{O}} = 0.0187 \pm 0.0029$ (Figure~\ref{fig:torus}b) and recovers both hidden action invariants on held-out test orbits with \textbf{2-Block Readout $R^2 = 0.9993 \pm 0.0002$} (Figure~\ref{fig:torus}d).
-\end{enumerate}
+\paragraph{Coupled oscillator experiment.}
+Two hidden invariants $(I_1,I_2)\in[0.25,1.5]^2$ determine the frequencies
+\begin{equation}
+ \omega_1=1+0.5I_1+0.25I_2,\qquad
+ \omega_2=\sqrt2+0.25I_1+0.40I_2.
+\end{equation}
+They are the derivatives of $\mathcal H(I)=I_1+\sqrt2 I_2+0.25I_1^2+0.20I_2^2+0.25I_1I_2$. A fixed smooth invertible observation map mixes the oscillator coordinates; it is not asserted to be canonical. There are 44 training, 8 validation, and 20 test trajectories, each containing 120 states at $\Delta t=0.08$. The frequency map has nonsingular Jacobian. Nonresonant sampled frequencies form a dense set of invariant labels, consistent with the density hypothesis in Theorem~\ref{thm:toroidal_kblock}; finite observed segments do not themselves certify dense coverage.
+
+The radius-frequency two-block model predicts each angular rate from both block radii. Its phase-independent frequency prior is stronger than blockwise norm conservation alone. The general-vector-field ablation instead applies two-block retraction to an unrestricted four-dimensional MLP output, using the same encoder, decoder, width, training objective, and number of updates. The one-sphere and unconstrained baselines also use general vector fields. The radius-frequency model attains two-block readout $R^2=0.9993\pm0.0001$, whereas the general-vector-field variant attains $0.305\pm0.358$ and has substantially larger reference-encoding block CV ($0.270\pm0.116$ versus $0.0187\pm0.0013$). Its rollout error is also larger. Thus blockwise preservation alone did not reproduce the strongest recovery under the same training schedule; the result supports the combined radius-frequency architecture. This ablation does not establish that a general vector field cannot learn a comparable representation with another training procedure. The difference is an empirical optimization result, not a numerical consequence of the topological theorem.
 
 \section{Discussion, Limitations, and Conclusion}
 \label{sec:discussion}
 
-Our theoretical and empirical results establish both the utility and the exact boundaries of norm-transferring skip connections:
-\begin{enumerate}
-    \item \textbf{Conditional Nature of Radial Foliation:} Theorems~\ref{thm:radial_foliation} and \ref{thm:toroidal_kblock} are conditional on exact intertwining ($E \circ \Phi_{\Delta t} = g \circ E$), topological orbit density within connected level sets, and global encoder injectivity. In practice, finite-horizon training achieves approximate intertwining ($\CV_{\mathcal{O}}(h) \approx 0.02\text{--}0.04$), and systems with resonant non-dense orbits (Figure~\ref{fig:obstructions}c) or chaotic non-integrable regions do not satisfy (H2).
-    \item \textbf{Multi-Basin Phase Spaces and Unknown Invariant Count $K$:} As proved in Theorem~\ref{thm:jordan_brouwer}, global homeomorphisms cannot map disjoint sub-barrier energy wells onto concentric origin-centered spheres; handling multi-basin topologies requires either atlas/chart-indexed encoders or non-injective basin folding. Similarly, $K$-Block SkipNorm requires specifying the number of blocks $K$; automatically pruning redundant blocks via radial variance regularization is a promising direction for future work.
-    \item \textbf{Dissipative and Open Systems:} Strict norm preservation ($\norm{g(z)}_2 = \norm{z}_2$) is tailored to conservative or unitary flows. Extending Geodesic SkipNorm with a learned radial gating factor $\hat{y} = \gamma_\theta(x) \norm{x}_2 (x + \alpha f_\perp(x))/\norm{x + \alpha f_\perp(x)}_2$ enables controlled radial contraction or expansion for dissipative dynamics while preserving the exact cotangent pullback structure up to $\gamma_\theta(x)$.
-\end{enumerate}
+The identification results require exact intertwining, regular fibers with sampled-orbit density on a dense set of labels, and global injectivity when distinct invariant levels must be separated. Finite-horizon prediction and low radius CV do not establish these hypotheses. Resonances can invalidate orbit density on a fiber; chaotic dynamics may satisfy density on some invariant sets, so chaos alone is not an exclusion criterion. The compact regular-fiber theorems do not address singular levels, separatrices, dissipative attractors, or changing invariant dimension.
+
+The multi-basin obstruction concerns a globally injective encoder defined on both enclosed basins. Local charts, a discrete basin label, or a different latent geometry can avoid this obstruction. The planar-block construction requires a specified number of blocks and does not by itself identify the number of physical invariants. Its homeomorphic recovery guarantee also does not select canonical actions or imply a particular finite-sample readout score. Conservation accuracy and trajectory accuracy remain separate evaluation criteria.
+
+The empirical scope is limited to synthetic systems and five optimization seeds on one fixed split. The strongest torus readout requires the additional radius-frequency prior in the tested protocol, and low double-well radius CV can coexist with poor held-out energy-to-radius calibration. The differential identities apply exactly only away from numerical cutoffs. We therefore interpret these experiments as checks and limitations of a representation principle, rather than a general claim of superior forecasting or automatic invariant discovery.
+
+For dissipative dynamics one could introduce a positive radial gate $\gamma(x)$ multiplying a norm-preserving map $F$. This changes the differential identity: with $r=\norm x_2$ and $u_{\mathrm{out}}=F(x)/r$, the product rule gives
+\begin{equation}
+    D(\gamma F)(x)^\top u_{\mathrm{out}}
+    =\gamma(x)u_{\mathrm{in}}+r\nabla\gamma(x).
+\end{equation}
+Thus a learned state-dependent gate does not retain the original exact radial pullback. Its treatment and identification theory lie outside the present scope.
 
 \subsubsection*{Broader Impact Statement}
 This work investigates fundamental mathematical and architectural properties of normalization layers and dynamical autoencoders. It carries no direct societal or ethical risks beyond those common to foundational machine learning and scientific computing methods.
 
 \subsubsection*{Reproducibility Statement}
-All proofs are provided in Appendices~\ref{app:geometry_proofs}--\ref{app:obstruction_proofs}. Complete JAX (float64) source code for all layers, unit tests, dataset generators with SHA-256 split manifests, 5-seed training scripts, and figure export manifests are included in the repository.
-
-\subsubsection*{Acknowledgments}
-Scientific visualization and audit workflows in this study utilized the K-Dense Scientific Agent Skills \citep{kassis2026scientific}.
+Proofs are provided in Appendices~\ref{app:geometry_proofs}--\ref{app:obstruction_proofs}. The accompanying anonymized source contains JAX float64 implementations, metric regression tests, fixed dataset generators and SHA-256 split manifests, five-seed training configurations, checkpoints, predictions, and figure/table export scripts. Historical drafts and exploratory runs are excluded from the accompanying review archive; numerical revision provenance is retained. Reference-solver refinement and source-to-table checks are reproducible from the documented commands.
 
 \bibliography{references}
 \bibliographystyle{tmlr}
@@ -545,7 +490,7 @@ For part~(d)(i), let $f(x) = R_{\log \norm{x}_2} x$ on $\R^2 \setminus \{0\}$. I
 \subsection{Proof of Proposition~\ref{prop:stabilized_spectra} (Exact Rank and Stabilized Normalizer Spectra)}
 
 \begin{proof}
-\textbf{Part (a):} By Proposition~\ref{prop:skipnorm_jacobian}(a), $[J_{\mathrm{SkipNorm}}(x)] = \begin{psmallmatrix} 1 & 0 \\ b & \tilde{A} \end{psmallmatrix}$. Subtracting $b$ times the first row from the remaining rows via the invertible row operation $\begin{psmallmatrix} 1 & 0 \\ -b & I_{d_{\mathrm{out}}-1} \end{psmallmatrix} \begin{psmallmatrix} 1 & 0 \\ b & \tilde{A} \end{psmallmatrix} = \begin{psmallmatrix} 1 & 0 \\ 0 & \tilde{A} \end{psmallmatrix}$ proves $\rank(J_{\mathrm{SkipNorm}}(x)) = 1 + \rank(\tilde{A}) = 1 + \rank(A|_T)$. For unstabilized RMSNorm ($\varepsilon = 0$), $D_x (\sqrt{d} f(x)/\norm{f(x)}_2) = \frac{\sqrt{d}}{\norm{y}_2} P_\perp A$, whose rank is $\rank(P_\perp A)$. For the $2\times 2$ counterexample at $x = e_1$ ($u_{\mathrm{in}} = e_1$) with $f(x) = (1 + x_2, 0)^\top$, $f(e_1) = e_1$ ($u_{\mathrm{out}} = e_1$) and $A = D_x f(e_1) = \begin{psmallmatrix} 0 & 1 \\ 0 & 0 \end{psmallmatrix}$ has $\rank(A) = 1$, yet $P_\perp = \begin{psmallmatrix} 0 & 0 \\ 0 & 1 \end{psmallmatrix} \implies P_\perp A = 0 \implies A|_T = 0$, so $\rank(J_{\mathrm{SkipNorm}}(e_1)) = 1 + 0 = 1$.
+\textbf{Part (a):} By Proposition~\ref{prop:skipnorm_jacobian}(a), $[J_{\mathrm{SkipNorm}}(x)] = \begin{psmallmatrix} 1 & 0 \\ b & \tilde{A} \end{psmallmatrix}$. Subtracting $b$ times the first row from the remaining rows via the invertible row operation $\begin{psmallmatrix} 1 & 0 \\ -b & I_{d_{\mathrm{out}}-1} \end{psmallmatrix} \begin{psmallmatrix} 1 & 0 \\ b & \tilde{A} \end{psmallmatrix} = \begin{psmallmatrix} 1 & 0 \\ 0 & \tilde{A} \end{psmallmatrix}$ proves $\rank(J_{\mathrm{SkipNorm}}(x)) = 1 + \rank(\tilde{A}) = 1 + \rank(A|_T)$. For unstabilized RMSNorm ($\varepsilon = 0$), $D_x (\sqrt{d} f(x)/\norm{f(x)}_2) = \frac{\sqrt{d}}{\norm{y}_2} P_\perp A$, whose rank is $\rank(P_\perp A)$. For the stated counterexample, $f(\xi)=A\xi+(0,-1)^\top$ gives $f(e_1)=e_1$ and $P_\perp A P_{e_1^\perp}=0$, whereas the full Jacobian is $\begin{psmallmatrix}1&0\\1&0\end{psmallmatrix}$. If $A$ is invertible, a vector $v\in u_{\mathrm{in}}^\perp$ lies in the kernel of $P_\perp A$ precisely when $v=tA^{-1}u_{\mathrm{out}}$ for some scalar $t$. There is a nonzero such vector precisely when $u_{\mathrm{in}}^\top A^{-1}u_{\mathrm{out}}=0$, and that kernel then has dimension one. This proves Eq.~\eqref{eq:full_rank_condition} and the rank-$d-1$ alternative. Composing either ideal primitive normalizer with an invertible $A$ preserves its primitive rank, giving the stated RMSNorm and LayerNorm ranks.
 
 \textbf{Part (b):} Differentiating $g_\varepsilon(y) = \sqrt{d} (r^2 + d\varepsilon)^{-1/2} y$ gives
 \begin{align}
@@ -575,13 +520,13 @@ By definition, $f_\perp(x) = (I_d - u_{\mathrm{in}} u_{\mathrm{in}}^\top) f(x)$ 
 \subsection{Proof of Theorem~\ref{thm:radial_foliation} (Conditional Radial Foliation)}
 
 \begin{proof}
-\textbf{Part (a):} Fix $c \in (c_{\min}, c_{\max})$ and let $x_0 \in \mathcal{O}_c$ be a point whose forward orbit $\Gamma(x_0) = \{\Phi_{\Delta t}^k(x_0) : k \in \mathbb{N}\}$ is dense in $\mathcal{O}_c$ by (H2). By (H1), $E(\Phi_{\Delta t}^k(x_0)) = g^k(E(x_0))$ and $\norm{g(z)}_2 = \norm{z}_2$, so induction on $k$ gives $\norm{E(\Phi_{\Delta t}^k(x_0))}_2 = \norm{E(x_0)}_2 \eqqcolon \psi(c)$ for all $k \in \mathbb{N}$. Since $E: U \to \R^{d_z}$ and $\norm{\cdot}_2: \R^{d_z} \to \R_{\ge 0}$ are continuous, the composite function $h(x) = \norm{E(x)}_2$ is continuous on $\mathcal{O}_c$. Because $h$ is constant on the dense subset $\Gamma(x_0) \subseteq \mathcal{O}_c$, $h(x) = \psi(c)$ for all $x \in \overline{\Gamma(x_0)} = \mathcal{O}_c$, proving Eq.~\eqref{eq:level_set_constancy}.
+\textbf{Part (a).} Let $h(x)=\norm{E(x)}_2$. Exact intertwining and norm preservation give $h(\Phi_{\Delta t}(x))=h(x)$, hence constancy on every forward orbit. For $c\in J_*$, continuity of $h$ extends this constancy from a dense orbit to all of $\mathcal O_c$.
 
-Now suppose every $c \in (c_{\min}, c_{\max})$ is a regular value of $I \in C^1(U, \R)$. Fix $c_0 \in (c_{\min}, c_{\max})$ and pick $x_0 \in \mathcal{O}_{c_0}$. Since $\nabla I(x_0) \neq 0$, the smooth curve $\gamma(s) = x_0 + s \nabla I(x_0) / \norm{\nabla I(x_0)}_2^2$ satisfies $(I \circ \gamma)'(0) = 1 \neq 0$. By the Inverse Function Theorem on $\R$, $I \circ \gamma$ is a $C^1$ diffeomorphism from an open neighborhood $(-\delta, \delta)$ onto an open neighborhood $(c_0 - \epsilon, c_0 + \epsilon) \subseteq (c_{\min}, c_{\max})$ with continuous inverse $\tau: (c_0 - \epsilon, c_0 + \epsilon) \to (-\delta, \delta)$. Then $\sigma(c) \coloneqq \gamma(\tau(c))$ is a continuous local section satisfying $I(\sigma(c)) = c$, so $\sigma(c) \in \mathcal{O}_c$ and $\psi(c) = \norm{E(\sigma(c))}_2$ is a composition of continuous maps, hence continuous at $c_0$.
+Fix an arbitrary $c\in J$ and $x,y\in\mathcal O_c$. Since $I$ is a submersion at $x$ and $y$, the submersion theorem provides continuous local sections $s_x,s_y$ on a common neighborhood $V$ of $c$, satisfying $s_x(c)=x$, $s_y(c)=y$, and $I\circ s_x=I\circ s_y=\mathrm{id}_V$. Choose $c_n\in J_*\cap V$ tending to $c$. Constancy on $\mathcal O_{c_n}$ gives $h(s_x(c_n))=h(s_y(c_n))$; continuity yields $h(x)=h(y)$. Thus $h=\psi\circ I$ for a uniquely defined $\psi$. The same local sections give $\psi|_V=h\circ s_x$, so $\psi$ is continuous.
 
-\textbf{Part (b):} Assume (H3) ($d_z = N \ge 2$, $\mathcal{O}_c$ regular, compact, and connected, and $E: U \to \R^N$ continuous and injective). First, if $\psi(c) = 0$ for some $c$, then $E(\mathcal{O}_c) = \{0\}$, contradicting injectivity of $E$ since $\mathcal{O}_c$ is a compact $(N-1)$-manifold with $N \ge 2$ (hence infinite). Thus $\psi(c) > 0$. By the Regular Value Theorem, $\mathcal{O}_c$ is a compact $(N-1)$-dimensional topological manifold without boundary, and $\Sp^{N-1}(\psi(c))$ is a connected $(N-1)$-dimensional manifold without boundary ($N \ge 2$). The restriction $E|_{\mathcal{O}_c}: \mathcal{O}_c \to \Sp^{N-1}(\psi(c))$ is continuous and injective. By Brouwer's Invariance of Domain for manifolds of equal dimension $(N-1)$ \citep{brouwer1911beweis, hatcher2002algebraic}, $E(\mathcal{O}_c)$ is open in $\Sp^{N-1}(\psi(c))$. Since $\mathcal{O}_c$ is compact and $\Sp^{N-1}(\psi(c))$ is Hausdorff, $E(\mathcal{O}_c)$ is also compact and hence closed in $\Sp^{N-1}(\psi(c))$. Because $\Sp^{N-1}(\psi(c))$ is connected for $N \ge 2$ and $E(\mathcal{O}_c) \neq \emptyset$, the clopen subset $E(\mathcal{O}_c)$ must equal the entire sphere $\Sp^{N-1}(\psi(c))$. A continuous bijection from a compact space $\mathcal{O}_c$ onto a Hausdorff space $\Sp^{N-1}(\psi(c))$ is a homeomorphism.
+\textbf{Part (b).} Under (H3), each $\mathcal O_c$ is a nonempty compact $(N-1)$-manifold without boundary. If $\psi(c)=0$, its entire image is a singleton, contradicting injectivity since $N-1\ge1$. For $\psi(c)>0$, the restriction $E|_{\mathcal O_c}$ is a continuous injection between $(N-1)$-manifolds. Its image is open in $\Sp^{N-1}(\psi(c))$ by invariance of domain and closed by compactness. The target is connected, so the image is the entire sphere. A continuous bijection from a compact space to a Hausdorff space is a homeomorphism.
 
-Finally, for any $c_1 \neq c_2$ in $(c_{\min}, c_{\max})$, $\mathcal{O}_{c_1} \cap \mathcal{O}_{c_2} = \emptyset$. By global injectivity of $E$ on $U$, $E(\mathcal{O}_{c_1}) \cap E(\mathcal{O}_{c_2}) = \Sp^{N-1}(\psi(c_1)) \cap \Sp^{N-1}(\psi(c_2)) = \emptyset$, which implies $\psi(c_1) \neq \psi(c_2)$. Thus $\psi: (c_{\min}, c_{\max}) \to \R_{>0}$ is continuous and injective on an open interval, hence strictly monotone, mapping $(c_{\min}, c_{\max})$ homeomorphically onto an open interval $(\psi_{\min}, \psi_{\max}) \subseteq \R_{>0}$.
+Distinct fibers have disjoint images by global injectivity. Two origin-centered spheres with the same radius coincide, so $\psi(c_1)\ne\psi(c_2)$ whenever $c_1\ne c_2$. A continuous injective real function on an interval is strictly monotone and maps an open interval homeomorphically to an open interval. This proves the claim.
 \end{proof}
 
 \subsection{Proof of the Resonant $1:1$ Harmonic Oscillator Control}
@@ -600,41 +545,74 @@ Since $\diag(\sqrt{2}I_2, I_2)$ commutes with $\diag(R_{\Delta t}, R_{\Delta t})
 \subsection{Proof of Theorem~\ref{thm:jordan_brouwer} (Jordan--Brouwer Multi-Well Obstruction) and Translated Control}
 
 \begin{proof}
-\textbf{Part (a) and (b):} Since $\mathcal{O}_{c_k}^{(k)} \cong \Sp^{N-1}$ ($k=1,2$) and $E: U \to \R^N$ is continuous and injective, each image $\Sigma_k \coloneqq E(\mathcal{O}_{c_k}^{(k)})$ is an embedded $(N-1)$-sphere in $\R^N$. By the Jordan--Brouwer Separation Theorem \citep{hatcher2002algebraic}, $\R^N \setminus \Sigma_k$ has exactly two connected components: a bounded interior $\operatorname{Int}(\Sigma_k)$ and an unbounded exterior $\operatorname{Ext}(\Sigma_k)$. By Brouwer's Invariance of Domain, $E$ is an open map from $U \subseteq \R^N$ to $\R^N$. Since $B_k \coloneqq \operatorname{Int}(\mathcal{O}_{c_k}^{(k)}) \subset U$ is connected and bounded with $\partial B_k = \mathcal{O}_{c_k}^{(k)}$, its image $E(B_k)$ is a connected open bounded set in $\R^N \setminus \Sigma_k$ with $\partial E(B_k) = \Sigma_k$, which implies $E(B_k) = \operatorname{Int}(\Sigma_k)$. Because $B_1 \cap B_2 = \emptyset$ and $E$ is injective on $U$, $\operatorname{Int}(\Sigma_1) \cap \operatorname{Int}(\Sigma_2) = E(B_1) \cap E(B_2) = \emptyset$. Therefore, $0 \in \R^N$ cannot belong to both $\operatorname{Int}(\Sigma_1)$ and $\operatorname{Int}(\Sigma_2)$. Because every origin-centered sphere $\Sp^{N-1}(r)$ ($r > 0$) has $\operatorname{Int}(\Sp^{N-1}(r)) = B_N(0, r) \ni 0$, $\Sigma_1$ and $\Sigma_2$ cannot both be origin-centered spheres.
+By invariance of domain, the continuous injective $E:U\to\R^N$ is a homeomorphism onto the open set $E(U)$. Each $\Gamma_i=E(\Sigma_i)$ is an embedded sphere. Jordan--Brouwer separation gives exactly two complementary components, one bounded and one unbounded. The set $E(B_i)$ is connected and open, and its closure is the compact set $E(\overline B_i)$: compactness gives one inclusion, and continuity on boundary-approaching sequences gives the other. Since $\overline B_i=B_i\cup\Sigma_i$ and $E$ is injective, $\partial E(B_i)=\Gamma_i$. It follows that $E(B_i)$ is both open and closed relative to the component of $\R^N\setminus\Gamma_i$ that contains it. Thus it equals that component, which must be bounded by compactness of its closure.
 
-\textbf{Translated Identity Encoder Control (Part (c)(iii)):} Let $K \subset \R^N$ be a compact domain with $R = \sup_{x \in K} \norm{x}_2$ and step displacement $D = \sup_{x \in K} \norm{\Phi_{\Delta t}(x) - x}_2$. For $a > R$, define $E_a(x) = a e_1 + x$ and $g(z) = z$. Then for all $x \in K$, $\norm{E_a(x)}_2 \in [a - R, a + R]$, so along any orbit in $K$ the mean radius satisfies $\bar{r} \ge a - R$ and the standard deviation satisfies $s \le R$, giving $\CV_{\mathcal{O}}(h) \le \frac{R}{a - R} = \mathcal{O}(a^{-1})$ and relative intertwining error $\frac{\norm{E_a(\Phi_{\Delta t}(x)) - g(E_a(x))}_2}{\norm{E_a(x)}_2} = \frac{\norm{\Phi_{\Delta t}(x) - x}_2}{\norm{a e_1 + x}_2} \le \frac{D}{a - R} = \mathcal{O}(a^{-1})$.
+The images $E(B_1)$ and $E(B_2)$ are disjoint by injectivity, proving (a). Every origin-centered sphere of positive radius encloses the origin, so (a) excludes two such images. Finally, if $\norm{E(\cdot)}_2$ were constant on a boundary $\Sigma_i$, the constant could not be zero by injectivity, and invariance of domain and compactness would force its image to equal the entire sphere of that radius. This proves the equivalent formulation in (b).
 \end{proof}
+
+\paragraph{Proof of the translated-encoder bounds.}
+For $E_a(x)=ae_1+x$ and $a>R$, the triangle inequality gives $a-R\le\norm{E_a(x)}_2\le a+R$. Under any probability measure supported on the trajectory, the mean radius is at least $a-R$ and the standard deviation is at most $R$ (the variance of a variable in an interval of width $2R$ is at most $R^2$). This proves the CV bound in Eq.~\eqref{eq:translated_control}. With $g=\mathrm{id}$, the latent residual is exactly $\Phi_{\Delta t}(x)-x$; dividing its norm by a denominator at least $a-R$ proves the relative-error bound. No absolute-error bound tending to zero follows from translation.
+
 
 \subsection{Proof of Theorem~\ref{thm:toroidal_kblock} ($K$-Block Toroidal Generalization)}
 
 \begin{proof}
-\textbf{Part (a):} By Theorem~\ref{thm:radial_foliation}(a), if $\norm{g(z)}_2 = \norm{z}_2$ and each $\mathcal{O}_c \cong \Tor^K$ carries a dense orbit, then $\norm{E(x)}_2 = \psi(I(x))$ for a continuous scalar map $\psi: \Omega \to \R_{\ge 0}$ on $\Omega \subseteq \R^K$. Since $K \ge 2 > 1$, $\psi$ cannot be injective on the open set $\Omega \subseteq \R^K$ (by Invariance of Domain, no continuous injective map exists from an open subset of $\R^K$ into $\R^1$ for $K \ge 2$); at any regular value $r$ of $\psi \in C^1(\Omega, \R)$, $\psi^{-1}(r)$ is a $(K-1)$-dimensional submanifold of $\Omega$. Furthermore, for $N \ge 3$, $\pi_1(\Sp^{N-1}) = 0 \neq \mathbb{Z}^K \cong \pi_1(\Tor^K)$, and for $N = 2$, $\dim(\Sp^1) = 1 < K = \dim(\Tor^K)$, so $\Tor^K$ is never homeomorphic to $\Sp^{N-1}$.
+First let $h:U\to\R$ be any continuous invariant of $\Phi_{\Delta t}$. It is constant on each dense sampled orbit and therefore on $\mathcal O_c$ for $c\in\Omega_*$. Given $x,y\in\mathcal O_c$ at any $c\in\Omega$, the submersion theorem gives local sections through both points on a common neighborhood of $c$. Evaluating them on a sequence from $\Omega_*$ tending to $c$ and using continuity proves $h(x)=h(y)$, exactly as in the scalar proof. A local section also proves that the induced function on $\Omega$ is continuous.
 
-\textbf{Part (b):} Under $g_{\mathrm{block}}$ on $\bigoplus_{k=1}^K \R^2$, each block norm $\rho_k(z) = \norm{z^{(k)}}_2$ satisfies $\rho_k(g_{\mathrm{block}}(z)) = \rho_k(z)$. Applying Theorem~\ref{thm:radial_foliation}(a) to $h_k(x) = \norm{E^{(k)}(x)}_2$ yields $h_k(x) = \psi_k(I(x))$ for continuous $\psi_k: \Omega \to \R_{\ge 0}$, so $E(\mathcal{O}_c) \subseteq \prod_{k=1}^K \Sp^1(\psi_k(c)) \cong \Tor^K$. When $E$ is an injective immersion and $\psi_k(c) > 0$, $E|_{\mathcal{O}_c}: \mathcal{O}_c \to \prod_{k=1}^K \Sp^1(\psi_k(c))$ is a continuous injective map between compact connected $K$-manifolds without boundary; by Invariance of Domain and compactness of $\mathcal{O}_c$, $E(\mathcal{O}_c) = \prod_{k=1}^K \Sp^1(\psi_k(c))$. Global injectivity of $E$ on $U$ forces $\prod_{k=1}^K \Sp^1(\psi_k(c_1)) \cap \prod_{k=1}^K \Sp^1(\psi_k(c_2)) = \emptyset$ whenever $c_1 \neq c_2$, which implies $\Psi(c_1) \neq \Psi(c_2)$, so $\Psi: \Omega \to \R_{>0}^K$ is continuous and injective, hence a homeomorphism onto its open image $\Psi(\Omega) \subseteq \R_{>0}^K$ by Invariance of Domain on $\R^K$.
+\textbf{Part (a).} Norm preservation and intertwining make $h=\norm{E(\cdot)}_2$ an invariant, so $h=\psi\circ I$ with $\psi$ continuous. If $\psi$ were injective, the map $c\mapsto(\psi(c),0,\ldots,0)$ would be a continuous injection from the open set $\Omega\subset\R^K$ to $\R^K$. Invariance of domain would make its image open, although it lies in a line and $K\ge2$. This contradiction proves noninjectivity. It rules out exact recovery of every label from the scalar, without a quantitative statement about a chosen test distribution or readout.
+
+\textbf{Part (b).} Each $h_k(x)=\norm{E^{(k)}(x)}_2$ is continuous and invariant, hence $h_k=\psi_k\circ I$ for continuous $\psi_k$. For a fixed $c$, let $m$ be the number of positive $\psi_k(c)$. The fiber image is contained in a product of $m$ circles and $K-m$ singleton blocks, a manifold of dimension $m$. If $m<K$, the restriction of $E$ would give a continuous injection from a $K$-manifold to an $m$-manifold, which is impossible by invariance of dimension. One can see this locally by composing coordinate charts with the inclusion $\R^m\hookrightarrow\R^K$ and applying invariance of domain. Therefore every $\psi_k(c)$ is positive.
+
+The restricted encoder is now a continuous injection from the compact $K$-manifold $\mathcal O_c$ to the connected $K$-manifold $\prod_k\Sp^1(\psi_k(c))$. Its image is open by invariance of domain and closed by compactness, so it equals the whole product; the restriction is a homeomorphism. If $c_1\ne c_2$ but $\Psi(c_1)=\Psi(c_2)$, these two entire product images coincide, contradicting global injectivity. Thus $\Psi$ is continuous and injective on the open set $\Omega\subset\R^K$. A final application of invariance of domain makes it a homeomorphism onto its open image.
 \end{proof}
 
 \section{Experimental Protocols, Dataset Splits, and Hyperparameters}
 \label{app:protocols}
 
-\paragraph{Whole-Orbit Disjoint Split Protocol and SHA-256 Provenance.}
-Every benchmark dataset is partitioned strictly at the level of \emph{whole trajectories} into disjoint training ($60\%$), validation ($20\%$), and test ($20\%$) orbit sets before any windowing is performed. The exact SHA-256 hashes of all split archives in \texttt{data/splits/} (recorded in \texttt{data/splits/splits\_manifest.json}) are:
-\begin{itemize}
-    \item \texttt{lotka\_volterra.npz} (48 train / 16 val / 16 test orbits, $T=180$): \texttt{aeea833ff1fe...}
-    \item \texttt{double\_well\_balanced.npz} (36 train / 12 val / 12 test orbits, $T=100$): \texttt{3f717bb33045...}
-    \item \texttt{double\_well\_imbalanced.npz} (36 train / 12 val / 12 test orbits, $T=100$): \texttt{09fd2e58072d...}
-    \item \texttt{double\_well\_tilted.npz} (36 train / 12 val / 12 test orbits, $T=100$): \texttt{8d349aad3f72...}
-    \item \texttt{coupled\_torus\_4d.npz} (60 train / 20 val / 20 test orbits, $T=120$): \texttt{aa076d92d9e8...}
-    \item \texttt{dnls\_1d.npz} (36 train / 12 val / 12 test orbits, $T=250$): \texttt{17394ed7b789...}
-\end{itemize}
+\paragraph{Data and evaluation.}
+We split at the trajectory level before drawing training windows. All six archives have SHA-256 manifests, and automated checks find no exactly repeated initial states across partitions. The symmetric double-well splits reuse some energy values across opposite wells (eight training--test label matches in the balanced split and two in the imbalanced split), but no energy--well pair is shared between training and test; these are distinct trajectory components. The other datasets have no exactly repeated training--test invariant labels. This protocol tests held-out trajectories rather than uniformly unseen energy values in every experiment. The fixed split counts are listed below. Here $T_{\rm test}$ is the full recorded test duration; forecast-MSE horizons for the autoencoders are shorter ($1.8$ or $2.88$). Training seeds are $0,1,2,3,4$ on one data split, so reported sample SD describes optimization variability, not variability over independently resampled datasets. The validation partitions are retained for reproducibility but are not used for checkpoint selection in these fixed-update runs. Physical invariant values are excluded from representation and dynamics training; training-partition labels are used only to fit the reported post-training calibration/readout. Models are evaluated from the first state of every test trajectory. Metrics over the full recorded test segment use reference encodings. All result tables are generated from the saved seed records, and the release includes forecasts, encoded trajectories, readout predictions, and checkpoints.
 
-\paragraph{4D Coupled Nonlinear Oscillator Equations ($K = 2$).}
-Latent action-angle variables $(I_1, I_2) \in [0.3, 1.5]^2$ evolve with coupled frequencies $\omega_1(I_1, I_2) = 1.0 + 0.35 I_1 + 0.15 I_2$ and $\omega_2(I_1, I_2) = \sqrt{2} + 0.20 I_1 + 0.40 I_2$, forming $u_t = (\sqrt{2 I_1}\cos\theta_{1,t}, \sqrt{2 I_1}\sin\theta_{1,t}, \sqrt{2 I_2}\cos\theta_{2,t}, \sqrt{2 I_2}\sin\theta_{2,t})^\top \in \R^4$. Observed states $x_t = \Phi_{\mathrm{mix}}(u_t) \in \R^4$ are generated by an orthogonal cross-mode rotation $R_{\mathrm{mix}} \in \mathrm{SO}(4)$ followed by a cubic shear diffeomorphism $s_1 = y_1 + 0.25 y_2^2 + 0.15 \sin(y_3)$, $s_2 = y_2 + 0.20 \cos(y_4)$, $s_3 = y_3 + 0.25 y_4^2 + 0.15 \sin(s_1)$, $s_4 = y_4 + 0.20 \cos(s_2)$ and anisotropic scaling $\diag(1.25, 0.80, 1.15, 0.85)$.
+\begin{center}
+\input{generated/table_splits.tex}
+\end{center}
 
-\paragraph{Training Hyperparameters.}
-All models are implemented in JAX with 64-bit precision (\texttt{jax\_enable\_x64=True}) and trained with AdamW ($\text{lr} = 2\times 10^{-3}$, cosine decay, weight decay $10^{-5}$) across 5 random seeds $\{0, 1, 2, 3, 4\}$. Autoencoders use 2-layer residual MLP or RealNVP coupling encoders/decoders (hidden width 64) trained strictly on reconstruction loss plus multi-step latent consistency and rollout MSE over horizon $K_{\mathrm{roll}} = 6$:
+\paragraph{Networks and optimization.}
+All experiments use JAX/Equinox float64, Adam with initial learning rate $0.003$, cosine decay to $5\%$ of that rate, no weight decay, and batches of 64 windows. MLPs have two hidden layers with $\tanh$ activations. Autoencoder widths are 48 for Lotka--Volterra and double-well experiments, and 64 for the oscillator experiment. Except for the free-offset bijective model, encoders are centered by subtracting their output at zero. Bijective encoders use six affine coupling layers and their exact inverse as decoder. MLP decoders are learned separately. Latent transition step scalars are learned from an initial value $0.20$. Lotka--Volterra uses 1,200 updates; double-well uses 1,000; the oscillator experiment uses 1,400. Each uses 12 latent transitions with temporal stride three, giving physical horizons $1.8$, $1.8$, and $2.88$, respectively. The stored run configurations record parameter counts and all random seeds.
+
+\paragraph{Autoencoder objective.}
+For a sampled window $x_0,\ldots,x_H$ at the model's effective step size, let $z_k=E(x_k)$ and $\hat z_k=g^k(z_0)$. Angle brackets below average over windows, the indicated time indices, and coordinates. Ordinary autoencoders minimize
+\begin{align}
+ \mathcal L={}&\big\langle(D(z_k)-x_k)^2\big\rangle_{k=0}^H
+ +\big\langle(D(\hat z_k)-x_k)^2\big\rangle_{k=1}^H\nonumber\\
+ &+1.5\big\langle(g(z_{k-1})-z_k)^2\big\rangle_{k=1}^H
+ +\big\langle(\hat z_k-z_k)^2\big\rangle_{k=1}^H.
+ \label{eq:training_loss}
+\end{align}
+For the symmetric reflection-quotient control only, each reconstruction/prediction term is replaced by the window/time mean of $\min\{\norm{\hat x-x}_2^2,\norm{\hat x+x}_2^2\}$, with a coordinate sum rather than a coordinate mean. Its task and loss scaling therefore differ deliberately from ordinary reconstruction; its scores are interpreted only as a constructed control. The geometrical transition routines floor denominators at $10^{-12}$ in these autoencoders and $10^{-30}$ in DNLS. Exact nonzero-domain identities apply where these floors are inactive, with finite-precision error otherwise.
+
+\paragraph{Projected-invariant comparison.}
+The trajectory-only projected baseline learns $h(x)=|h_\theta(x)-h_\theta(0)|+0.1$ and $v_\theta(x)$ and uses
 \begin{equation}
-    \mathcal{L}(\theta) = \frac{1}{K_{\mathrm{roll}}} \sum_{k=0}^{K_{\mathrm{roll}}} \norm{D(g^k(E(x_t))) - x_{t+k}}_2^2 + \lambda_{\mathrm{lat}} \frac{1}{K_{\mathrm{roll}}} \sum_{k=1}^{K_{\mathrm{roll}}} \norm{g^k(E(x_t)) - E(x_{t+k})}_2^2, \qquad \lambda_{\mathrm{lat}} = 0.5,
+ \tilde v(x)=v_\theta(x)-\frac{\nabla h(x)^\top v_\theta(x)}{\norm{\nabla h(x)}_2^2+10^{-8}}\nabla h(x).
 \end{equation}
-with zero access to ground-truth conserved quantities $I(x)$ during training or validation.
+It integrates each $0.15$ prediction interval with three midpoint-RK2 substeps of $0.05$. The networks have width 48. The objective is the same-horizon trajectory MSE plus $[\max(0,0.30-\operatorname{SD}(h))]^2+0.5\,\mathbb E_{\mathrm{windows}}\Var_{\mathrm{time}}(h)$. The spread and within-window regularizer does not use physical invariant labels. We retain this adapted comparison under the name ``projected invariant,'' without attributing its results to the original COMET method or claiming its finite-step integration exactly conserves $h$.
+
+\paragraph{DNLS training and timing.}
+DNLS models use two hidden layers of width 96, a learned step scalar initialized to $0.10$, 900 updates, and an eight-step coordinate-mean prediction MSE. The linear orthogonal model instead learns a $32\times32$ matrix whose skew part generates its Cayley transition. The state-dependent model predicts $U,V\in\R^{32\times4}$ and sets $S(x)=(UV^\top-VU^\top)/\sqrt{32}$; the implementation uses a dense solve, without a low-rank Woodbury optimization. Pre/post RMSNorm use $\varepsilon=10^{-5}$. Timings exclude compilation and use the median of ten synchronized warm calls per trained model; the table summarizes those medians across seeds. Each call forecasts all 12 test trajectories for 249 steps on an Apple Silicon CPU. The final timing pass is performed after training jobs finish. Environment details and individual timing samples are saved with the results. No general complexity lower bound for state-dependent orthogonal maps is claimed.
+
+\paragraph{Oscillator observations.}
+Let $u=(\sqrt{2I_1}\cos\theta_1,\sqrt{2I_1}\sin\theta_1,\sqrt{2I_2}\cos\theta_2,\sqrt{2I_2}\sin\theta_2)$ with $\dot\theta_k=\omega_k(I)$, and set $v=Qu$, where
+\begin{equation}
+ Q=\begin{pmatrix}
+ .80&-.36&.44&.18\\ .36&.80&-.18&.44\\
+ -.44&.18&.80&-.36\\ -.18&-.44&.36&.80
+ \end{pmatrix}.
+\end{equation}
+The observations are
+\begin{align}
+ x_1&=v_1+.18\sin(v_2+v_3),& x_2&=v_2+.18\cos(v_3-v_4),\nonumber\\
+ x_3&=v_3+.15\sin(.7v_1),& x_4&=v_4+.15\cos(.7v_2).
+\end{align}
+This map is globally invertible: $\det Q=0.87406096\ne0$, and the nonlinear perturbation of $v$ has derivative infinity norm at most $0.36<1$. For any $x$, the inverse equation $v=x-s(v)$ has a unique solution by the contraction theorem; its Jacobian is nonsingular, so the inverse is smooth. The transformation need not preserve the canonical symplectic form. The learned block radii are invariant coordinates, not asserted to be canonical action variables.
 
 \end{document}

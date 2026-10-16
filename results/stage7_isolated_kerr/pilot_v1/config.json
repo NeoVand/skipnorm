@@ -1,0 +1,96 @@
+{
+  "protocol_sha256": "d117a7873eedfb4ac45ea0dd82c081613e12ee9fa343c05aa8cd1330c55de8ef",
+  "dataset_sha256": "a0a0eaf2eb62627a523157c37f16399b21ce18a809ac2870a3983ed45f514fd3",
+  "source_sha256": {
+    "experiments/stage7_isolated_kerr.py": "f45f54105fcac1677a979d6c97b9b73d16c634c05bb1c5e80487d52d82f4a6cb",
+    "skipnorm/hamiltonian_normalization.py": "f44192ac0cc789fe230af3b04c6a6f3d87508f1619395b8fbaa1dc051c7c7df5"
+  },
+  "splits": {
+    "train": [
+      1024,
+      817001,
+      0.5,
+      3.4
+    ],
+    "validation": [
+      256,
+      817002,
+      0.5,
+      3.4
+    ],
+    "test_id": [
+      512,
+      817003,
+      0.5,
+      3.4
+    ],
+    "test_ood": [
+      512,
+      817004,
+      3.4,
+      4.0
+    ]
+  },
+  "updates": 900,
+  "horizon": 8,
+  "batch_size": 64,
+  "learning_rate": 0.003,
+  "cosine_final_fraction": 0.05,
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "model_selection": "final parameters",
+  "phase": {
+    "stages": 4,
+    "width": 64,
+    "delta": 1.0,
+    "time": 0.2506515504822309,
+    "budget": 0.5
+  },
+  "log_intensity_phase": {
+    "width": 32,
+    "hidden_layers": 2,
+    "alpha": 0.5210953054937474,
+    "shared_across_modes": true,
+    "spectral_cap": 1.0,
+    "activation": "tanh",
+    "budget": 0.5
+  },
+  "jacobian_test_id_indices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    256,
+    257,
+    258,
+    259,
+    260,
+    261,
+    262,
+    263,
+    264,
+    265,
+    266,
+    267,
+    268,
+    269,
+    270,
+    271
+  ],
+  "metrics": "mse_200 cumulative; endpoint separately recorded"
+}

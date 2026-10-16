@@ -1,0 +1,7 @@
+{
+  "target_max_finite_difference_error": 9.440240256175514e-12,
+  "phase_power_max_difference": 3.3306690738754696e-16,
+  "log_intensity_finite_difference_error": 8.261280548538252e-12,
+  "log_intensity_inverse_error": 2.220446049250313e-16,
+  "log_intensity_initial_certificate": 0.27107499426926296
+}

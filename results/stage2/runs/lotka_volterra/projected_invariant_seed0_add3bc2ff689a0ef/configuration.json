@@ -1,0 +1,53 @@
+{
+  "configuration": {
+    "protocol_version": "stage2-v2-heldout-calibration",
+    "suite": "lotka_volterra",
+    "mode": "projected_invariant",
+    "seed": 0,
+    "initialization_key_seed": 500,
+    "width": 48,
+    "depth": 2,
+    "dim": 2,
+    "num_blocks": 1,
+    "steps": 1200,
+    "batch_size": 64,
+    "optimizer": "Adam",
+    "learning_rate": 0.003,
+    "schedule": "cosine decay to 0.05 of initial rate",
+    "dt": 0.05,
+    "stride": 3,
+    "rollout_horizon": 12,
+    "physical_eval_horizon": 1.8000000000000003,
+    "reflection_quotient": false,
+    "latent_prior": "general state-dependent vector field",
+    "encoder_origin_pinned": false,
+    "loss": "trajectory MSE + relu(0.30-std(h))^2 + 0.5*within_window_variance(h)",
+    "quotient_loss_note": null,
+    "invariant_labels_used_in_training": false,
+    "split_file": "data/splits/lotka_volterra.npz",
+    "split_sha256": "aeea833ff1fe0692fc34f55e00bda7cc8563f639cf4fd5fb6b2fb7a485b8d1f8",
+    "source_sha256": {
+      "experiments/stage2_foliation_and_obstructions.py": "db560b8f2a62a39dec48e05bfae6c046b6bf7856ac715b1c0a86d1584e9d5bc1",
+      "skipnorm/metrics.py": "2eab1500829a9e1dd4c1ac1f576a18b63a37f8ef84556ab676e22729283a052e",
+      "skipnorm/jax_layers.py": "78a37d8c207d2988c81b11b67346958e2d4d2d2b5ad3ae835299cf5866a9f8d7"
+    },
+    "seed_sd_ddof": 1,
+    "isotonic_protocol": "train-fitted invariant-to-mean-radius; direction by training SSE; linear interpolation; boundary clipping; untruncated test R2",
+    "ovr_protocol": "within/total; total and between variances must exceed (1e-4*training centered RMS latent spread)^2",
+    "integrator": "explicit midpoint RK2",
+    "integrator_dt": 0.05,
+    "integrator_substeps": 3,
+    "integration_revision": "Preserve original .05 integration resolution with three substeps per .15 outer transition; architecture/loss unchanged. Earlier one-step .15 results are archived.",
+    "scalar_gauge": "abs(h_net(x)-h_net(0)) + 0.1; CV depends on this gauge"
+  },
+  "training_seconds": 11.289535625022836,
+  "parameter_count": 5139,
+  "jax_version": "0.11.2",
+  "numpy_version": "2.5.4",
+  "backend": "cpu",
+  "devices": [
+    "cpu:0"
+  ],
+  "platform": "macOS-26.3-arm64-arm-64bit-Mach-O",
+  "completed_utc": "2026-10-15T16:59:31.664445+00:00"
+}

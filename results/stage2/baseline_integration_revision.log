@@ -1,0 +1,17 @@
+[Stage 2] lotka_volterra
+  train lotka_volterra projected_invariant seed=0 steps=1200
+  trained in 11.3s; checkpoint saved
+  LV Projected-Invariant Baseline (COMET-inspired) seed=0: CV=0.3707 R2=0.9996 MSE=0.244241
+  train lotka_volterra projected_invariant seed=1 steps=1200
+  trained in 11.0s; checkpoint saved
+  LV Projected-Invariant Baseline (COMET-inspired) seed=1: CV=0.3926 R2=0.9999 MSE=0.184087
+  train lotka_volterra projected_invariant seed=2 steps=1200
+  trained in 11.3s; checkpoint saved
+  LV Projected-Invariant Baseline (COMET-inspired) seed=2: CV=0.0240 R2=1.0000 MSE=0.00067901
+  train lotka_volterra projected_invariant seed=3 steps=1200
+  trained in 11.9s; checkpoint saved
+  LV Projected-Invariant Baseline (COMET-inspired) seed=3: CV=0.5214 R2=0.9999 MSE=0.795049
+  train lotka_volterra projected_invariant seed=4 steps=1200
+  trained in 11.4s; checkpoint saved
+  LV Projected-Invariant Baseline (COMET-inspired) seed=4: CV=0.4899 R2=0.9998 MSE=0.229514
+[Stage 2] Saved /Users/neo/repos/skipnorm/results/stage2/stage2_partial_results.json

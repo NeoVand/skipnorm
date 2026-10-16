@@ -1,0 +1,470 @@
+{
+  "kind": "geodesic",
+  "seed": 0,
+  "config": {
+    "updates": 8000,
+    "warmup": 4000,
+    "batch_size": 32,
+    "horizon": 8,
+    "history": 3,
+    "width": 64,
+    "latent_dim": 16,
+    "learning_rate": 0.001,
+    "validate_every": 200,
+    "eval_count": 32,
+    "image_shape": [
+      24,
+      48
+    ],
+    "dt": 0.08,
+    "reconstruction_weight": 0.5,
+    "train_steps": 40,
+    "data_sha256": "55b65ebf143bd4585b2660c9c9e2eccb4a4239df6191e68936eb155fc8613626",
+    "selection": "minimum short-horizon ID validation pixel loss",
+    "kind": "geodesic"
+  },
+  "parameters": {
+    "encoder": 451792,
+    "decoder": 158016,
+    "dynamics": 6288,
+    "total": 616096
+  },
+  "training": {
+    "best_validation_loss": 0.0020351512357592583,
+    "selected_update": 7800,
+    "training_seconds": 16.613425708026625
+  },
+  "curve": [
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 1,
+      "training_loss": 0.03237681835889816,
+      "validation_loss": 0.03174417093396187,
+      "seconds": 0.5148274169769138
+    },
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 200,
+      "training_loss": 0.014781060628592968,
+      "validation_loss": 0.014468125998973846,
+      "seconds": 0.9865234999451786
+    },
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 400,
+      "training_loss": 0.012188171036541462,
+      "validation_loss": 0.012697413563728333,
+      "seconds": 1.4381610000273213
+    },
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 600,
+      "training_loss": 0.01125345192849636,
+      "validation_loss": 0.012060063891112804,
+      "seconds": 1.98693320795428
+    },
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 800,
+      "training_loss": 0.011185098439455032,
+      "validation_loss": 0.011937305331230164,
+      "seconds": 2.5436948749702424
+    },
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 1000,
+      "training_loss": 0.011225624941289425,
+      "validation_loss": 0.011142553761601448,
+      "seconds": 3.064569083042443
+    },
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 1200,
+      "training_loss": 0.009698914363980293,
+      "validation_loss": 0.010667640715837479,
+      "seconds": 3.6464192080311477
+    },
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 1400,
+      "training_loss": 0.009700690396130085,
+      "validation_loss": 0.010572835803031921,
+      "seconds": 4.114842667011544
+    },
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 1600,
+      "training_loss": 0.008611375465989113,
+      "validation_loss": 0.010151546448469162,
+      "seconds": 4.492395957931876
+    },
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 1800,
+      "training_loss": 0.0076494114473462105,
+      "validation_loss": 0.008920388296246529,
+      "seconds": 4.871442792005837
+    },
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 2000,
+      "training_loss": 0.0074699632823467255,
+      "validation_loss": 0.008407410234212875,
+      "seconds": 5.248960208031349
+    },
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 2200,
+      "training_loss": 0.006723657250404358,
+      "validation_loss": 0.007719220593571663,
+      "seconds": 5.625389458029531
+    },
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 2400,
+      "training_loss": 0.00586507935076952,
+      "validation_loss": 0.0076700178906321526,
+      "seconds": 6.002005957998335
+    },
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 2600,
+      "training_loss": 0.00552601832896471,
+      "validation_loss": 0.006806711666285992,
+      "seconds": 6.377727832994424
+    },
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 2800,
+      "training_loss": 0.0051764268428087234,
+      "validation_loss": 0.0061743902042508125,
+      "seconds": 6.754855292034335
+    },
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 3000,
+      "training_loss": 0.004789311904460192,
+      "validation_loss": 0.005929538980126381,
+      "seconds": 7.131976541946642
+    },
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 3200,
+      "training_loss": 0.004583396948873997,
+      "validation_loss": 0.005870339926332235,
+      "seconds": 7.507202332955785
+    },
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 3400,
+      "training_loss": 0.004248252138495445,
+      "validation_loss": 0.005331848748028278,
+      "seconds": 7.882665082928725
+    },
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 3600,
+      "training_loss": 0.004341712221503258,
+      "validation_loss": 0.00524397986009717,
+      "seconds": 8.2578973750351
+    },
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 3800,
+      "training_loss": 0.0043514445424079895,
+      "validation_loss": 0.004872535355389118,
+      "seconds": 8.632363791926764
+    },
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 4000,
+      "training_loss": 0.002937804441899061,
+      "validation_loss": 0.004455304238945246,
+      "seconds": 9.008917000028305
+    },
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 4200,
+      "training_loss": 0.0033186734654009342,
+      "validation_loss": 0.004566395655274391,
+      "seconds": 9.383363457978703
+    },
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 4400,
+      "training_loss": 0.0027238158509135246,
+      "validation_loss": 0.004220230970531702,
+      "seconds": 9.757757499930449
+    },
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 4600,
+      "training_loss": 0.0030903765000402927,
+      "validation_loss": 0.003899666713550687,
+      "seconds": 10.140194999985397
+    },
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 4800,
+      "training_loss": 0.0024962718598544598,
+      "validation_loss": 0.00372797017917037,
+      "seconds": 10.517018957994878
+    },
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 5000,
+      "training_loss": 0.0029213924426585436,
+      "validation_loss": 0.003597503062337637,
+      "seconds": 10.897555417031981
+    },
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 5200,
+      "training_loss": 0.0020959293469786644,
+      "validation_loss": 0.00339176831766963,
+      "seconds": 11.272608708008192
+    },
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 5400,
+      "training_loss": 0.0023509515449404716,
+      "validation_loss": 0.003233544994145632,
+      "seconds": 11.64657579199411
+    },
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 5600,
+      "training_loss": 0.0020523127168416977,
+      "validation_loss": 0.0032582611311227083,
+      "seconds": 12.027114666998386
+    },
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 5800,
+      "training_loss": 0.002058248268440366,
+      "validation_loss": 0.0030449796468019485,
+      "seconds": 12.407981124939397
+    },
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 6000,
+      "training_loss": 0.0021538257133215666,
+      "validation_loss": 0.00276222568936646,
+      "seconds": 12.795241917017847
+    },
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 6200,
+      "training_loss": 0.002090136520564556,
+      "validation_loss": 0.00264071230776608,
+      "seconds": 13.17191983293742
+    },
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 6400,
+      "training_loss": 0.0017219317378476262,
+      "validation_loss": 0.0025234792847186327,
+      "seconds": 13.547446000040509
+    },
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 6600,
+      "training_loss": 0.0015580952167510986,
+      "validation_loss": 0.002396967262029648,
+      "seconds": 13.974823832977563
+    },
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 6800,
+      "training_loss": 0.001594466157257557,
+      "validation_loss": 0.0023686112836003304,
+      "seconds": 14.35533575003501
+    },
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 7000,
+      "training_loss": 0.001954002771526575,
+      "validation_loss": 0.0022958042100071907,
+      "seconds": 14.730894375010394
+    },
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 7200,
+      "training_loss": 0.001548897591419518,
+      "validation_loss": 0.002157107926905155,
+      "seconds": 15.10948133294005
+    },
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 7400,
+      "training_loss": 0.0013718134723603725,
+      "validation_loss": 0.00211648503318429,
+      "seconds": 15.485381750040688
+    },
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 7600,
+      "training_loss": 0.0015797672094777226,
+      "validation_loss": 0.0020663063041865826,
+      "seconds": 15.862779791932553
+    },
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 7800,
+      "training_loss": 0.00120702781714499,
+      "validation_loss": 0.0020351512357592583,
+      "seconds": 16.238712207996286
+    },
+    {
+      "stage": "dynamics",
+      "kind": "geodesic",
+      "seed": 0,
+      "update": 8000,
+      "training_loss": 0.001428405987098813,
+      "validation_loss": 0.002116316929459572,
+      "seconds": 16.61241829197388
+    }
+  ],
+  "test": {
+    "position_rmse": 0.4005672520162973,
+    "position_nrmse": 1.3895630242147679,
+    "velocity_fd_rmse": 0.427927570645401,
+    "valid_horizon_mean": 9.78125,
+    "valid_horizon_median": 11.0,
+    "valid_horizon_threshold": 0.3,
+    "finite_fraction": 1.0,
+    "position_nrmse_8": 0.14866314721823987,
+    "position_nrmse_20": 0.5673223157816184,
+    "position_nrmse_50": 1.1748502821757167,
+    "position_nrmse_100": 1.5241294528961684,
+    "position_nrmse_197": 1.3895630242147679,
+    "localized_object_fraction": 0.17710977157360405,
+    "mean_vertical_spread_pixels": 3.847479412887547,
+    "mean_foreground_mass_ratio": 5.202626720244332,
+    "localized_1px_valid_horizon_mean": 13.84375,
+    "position_rmse_pixels": 1.8025526340733378,
+    "nrmse_threshold_pixels_per_mass": [
+      0.4069475531578064,
+      0.3839964270591736,
+      0.38810569047927856,
+      0.3839641213417053
+    ],
+    "pixel_mse": 0.0435408391058445,
+    "balanced_pixel_loss": 0.13946472108364105,
+    "initial_reconstruction_position_rmse": 0.053078695754228335,
+    "mean_final_relative_latent_norm_drift": 6.384165658346319e-07,
+    "max_relative_latent_norm_drift": 1.9767308003793005e-06,
+    "rollout_ms_per_trajectory": 0.31693359414930455
+  },
+  "ood": {
+    "position_rmse": 0.5982880251850466,
+    "position_nrmse": 2.071988897244084,
+    "velocity_fd_rmse": 0.8795664884773661,
+    "valid_horizon_mean": 0.15625,
+    "valid_horizon_median": 0.0,
+    "valid_horizon_threshold": 0.3,
+    "finite_fraction": 1.0,
+    "position_nrmse_8": 0.9536299716178979,
+    "position_nrmse_20": 1.5265340885562593,
+    "position_nrmse_50": 1.9960800469861393,
+    "position_nrmse_100": 2.143685079244381,
+    "position_nrmse_197": 2.071988897244084,
+    "localized_object_fraction": 0.1369765228426396,
+    "mean_vertical_spread_pixels": 3.9037782486083596,
+    "mean_foreground_mass_ratio": 4.972505535928583,
+    "localized_1px_valid_horizon_mean": 0.28125,
+    "position_rmse_pixels": 2.69229611333271,
+    "nrmse_threshold_pixels_per_mass": [
+      0.4069475531578064,
+      0.3839964270591736,
+      0.38810569047927856,
+      0.3839641213417053
+    ],
+    "pixel_mse": 0.038205813616514206,
+    "balanced_pixel_loss": 0.12448199093341827,
+    "initial_reconstruction_position_rmse": 0.39512452318983265,
+    "mean_final_relative_latent_norm_drift": 7.003753808021429e-07,
+    "max_relative_latent_norm_drift": 2.006545628319145e-06,
+    "rollout_ms_per_trajectory": 0.4457994691620115
+  }
+}

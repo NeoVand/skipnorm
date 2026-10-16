@@ -1,0 +1,13 @@
+{
+  "all_twelve_records_checkpoints_arrays_present": true,
+  "exact_unique_states_all_splits": 2304,
+  "source_dataset_protocol_hashes_verified": true,
+  "metrics_recomputed_from_saved_angles": true,
+  "max_absolute_metric_discrepancy": 5.551115123125783e-17,
+  "all_three_seed_sample_SD_verified": true,
+  "bounded_model_sampled_singular_values_inside_actual_certificates": true,
+  "total_training_seconds": 6.1794307510135695,
+  "all_checkpoint_angles_and_final_validation_losses_verified": true,
+  "max_checkpoint_angle_discrepancy": 0.0,
+  "max_validation_loss_discrepancy": 1.6263032587282567e-19
+}

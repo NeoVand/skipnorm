@@ -1,0 +1,128 @@
+{
+  "kind": "residual",
+  "seed": 0,
+  "config": {
+    "updates": 200,
+    "warmup": 200,
+    "batch_size": 32,
+    "horizon": 8,
+    "history": 3,
+    "width": 64,
+    "latent_dim": 16,
+    "learning_rate": 0.001,
+    "validate_every": 100,
+    "eval_count": 8,
+    "image_shape": [
+      24,
+      48
+    ],
+    "dt": 0.08,
+    "reconstruction_weight": 0.5,
+    "train_steps": 40,
+    "data_sha256": "55b65ebf143bd4585b2660c9c9e2eccb4a4239df6191e68936eb155fc8613626",
+    "selection": "minimum short-horizon ID validation pixel loss",
+    "kind": "residual"
+  },
+  "parameters": {
+    "encoder": 451792,
+    "decoder": 158016,
+    "dynamics": 6288,
+    "total": 616096
+  },
+  "training": {
+    "best_validation_loss": 0.03310297802090645,
+    "selected_update": 200,
+    "training_seconds": 0.8602711660787463
+  },
+  "curve": [
+    {
+      "stage": "dynamics",
+      "kind": "residual",
+      "seed": 0,
+      "update": 1,
+      "training_loss": 0.0361652635037899,
+      "validation_loss": 0.03651289641857147,
+      "seconds": 0.45864083303604275
+    },
+    {
+      "stage": "dynamics",
+      "kind": "residual",
+      "seed": 0,
+      "update": 100,
+      "training_loss": 0.03424180671572685,
+      "validation_loss": 0.03408428654074669,
+      "seconds": 0.6625023330561817
+    },
+    {
+      "stage": "dynamics",
+      "kind": "residual",
+      "seed": 0,
+      "update": 200,
+      "training_loss": 0.03172694891691208,
+      "validation_loss": 0.03310297802090645,
+      "seconds": 0.8592484160326421
+    }
+  ],
+  "test": {
+    "position_rmse": 0.30816864548312245,
+    "position_nrmse": 1.0617504409555307,
+    "velocity_fd_rmse": 0.430211087778154,
+    "valid_horizon_mean": 0.0,
+    "valid_horizon_median": 0.0,
+    "valid_horizon_threshold": 0.3,
+    "finite_fraction": 1.0,
+    "position_nrmse_8": 0.9929342094277662,
+    "position_nrmse_20": 0.9963330585520757,
+    "position_nrmse_50": 1.062824569442433,
+    "position_nrmse_100": 1.0696282713505387,
+    "position_nrmse_197": 1.0617504409555307,
+    "localized_object_fraction": 0.024428934010152285,
+    "mean_vertical_spread_pixels": 1.9812270909473269,
+    "mean_foreground_mass_ratio": 2.2207178655704576,
+    "localized_1px_valid_horizon_mean": 0.0,
+    "position_rmse_pixels": 1.386758904674051,
+    "nrmse_threshold_pixels_per_mass": [
+      0.4069475531578064,
+      0.3839964270591736,
+      0.38810569047927856,
+      0.3839641213417053
+    ],
+    "pixel_mse": 0.010831457562744617,
+    "balanced_pixel_loss": 0.03180782124400139,
+    "initial_reconstruction_position_rmse": 0.34078709698155524,
+    "mean_final_relative_latent_norm_drift": 0.4522742033004761,
+    "max_relative_latent_norm_drift": 0.7358494997024536,
+    "rollout_ms_per_trajectory": 0.352255257894285
+  },
+  "ood": {
+    "position_rmse": 0.5334491459443162,
+    "position_nrmse": 1.8427707469969268,
+    "velocity_fd_rmse": 0.8548421690772061,
+    "valid_horizon_mean": 0.0,
+    "valid_horizon_median": 0.0,
+    "valid_horizon_threshold": 0.3,
+    "finite_fraction": 1.0,
+    "position_nrmse_8": 1.9114614705762272,
+    "position_nrmse_20": 1.851167738439561,
+    "position_nrmse_50": 1.8488394872769394,
+    "position_nrmse_100": 1.8420703311448416,
+    "position_nrmse_197": 1.8427707469969268,
+    "localized_object_fraction": 0.015228426395939087,
+    "mean_vertical_spread_pixels": 2.113182295431736,
+    "mean_foreground_mass_ratio": 2.1495323783675295,
+    "localized_1px_valid_horizon_mean": 0.0,
+    "position_rmse_pixels": 2.400521156749423,
+    "nrmse_threshold_pixels_per_mass": [
+      0.4069475531578064,
+      0.3839964270591736,
+      0.38810569047927856,
+      0.3839641213417053
+    ],
+    "pixel_mse": 0.013344718143343925,
+    "balanced_pixel_loss": 0.056863900274038315,
+    "initial_reconstruction_position_rmse": 0.6358476322784665,
+    "mean_final_relative_latent_norm_drift": 0.24475067853927612,
+    "max_relative_latent_norm_drift": 0.5198354125022888,
+    "rollout_ms_per_trajectory": 0.24987499637063593
+  }
+}

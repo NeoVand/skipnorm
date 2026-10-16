@@ -1,0 +1,75 @@
+{
+  "config": {
+    "updates": 2,
+    "horizon": 8,
+    "batch_size": 64,
+    "learning_rate": 0.003,
+    "optimizer": "Adam",
+    "cosine_final_fraction": 0.05,
+    "model_selection": "final update; validation recorded only",
+    "coupling": {
+      "stages": 8,
+      "width": 32,
+      "depth": 2,
+      "budget": 0.5,
+      "delta": 1.0,
+      "linear_mixing": "learned Cayley, identity initialization",
+      "initialization": "same projected weights in all coupling variants"
+    },
+    "precision": "float64",
+    "split_sha256": "17394ed7b789c0fc6b7379daf7cead1d1d7b957f267fd78528ef3e5e8a8cb983",
+    "source_sha256": {
+      "experiments/stage5_rotation_coupling.py": "c7e59464352cde951d3637456a49d23a1f479786eaaa4f8fb6753e5ed25bf911",
+      "skipnorm/rotation_coupling.py": "290e8c0f1bb04e9d3233620cb1c0e545920e11215f0b84041e991475f37aefde",
+      "experiments/stage3_dnls_benchmark.py": "756ff6ecc7a9b0c4561d746f9aa59e3865988401e40c1efc038fb6318d687ea4",
+      "skipnorm/jax_layers.py": "78a37d8c207d2988c81b11b67346958e2d4d2d2b5ad3ae835299cf5866a9f8d7"
+    }
+  },
+  "hardware": {
+    "platform": "macOS-26.3-arm64-arm-64bit-Mach-O",
+    "processor": "arm",
+    "jax": "0.11.2",
+    "equinox": "0.13.8",
+    "devices": [
+      "cpu:0"
+    ]
+  },
+  "status": "exploratory three-seed screen; fixed existing split; no new-dataset evidence",
+  "summary": {
+    "coupling_bounded": {
+      "label": "Normalized coupling, bounded",
+      "seeds": [
+        0
+      ],
+      "n_parameters": 16192,
+      "mse_1": {
+        "mean": 5.108280031186812e-05,
+        "sample_sd": null
+      },
+      "mse_20": {
+        "mean": 0.006673956907109972,
+        "sample_sd": null
+      },
+      "mse_50": {
+        "mean": 0.02951913257712982,
+        "sample_sd": null
+      },
+      "mse_200": {
+        "mean": 0.08838180602003362,
+        "sample_sd": null
+      },
+      "mse_249": {
+        "mean": 0.09247513024046664,
+        "sample_sd": null
+      },
+      "max_relative_power_drift": {
+        "mean": 4.1193333058142114e-14,
+        "sample_sd": null
+      },
+      "rollout_ms": {
+        "mean": 7.961083028931171,
+        "sample_sd": null
+      }
+    }
+  }
+}

@@ -1,0 +1,128 @@
+{
+  "test_id": {
+    "mse_1": 2.2507386985705875e-06,
+    "mse_200": 0.02238944826858669,
+    "endpoint_mse_200": 0.05564196111453379,
+    "aligned_mse_1": 4.223460438301925e-07,
+    "aligned_mse_200": 0.004953765724060183,
+    "aligned_endpoint_mse_200": 0.013401201794418734,
+    "phase_increment_rmse": 0.0061479181295468486,
+    "wrapped_phase_increment_rmse": 0.0061479181295468486,
+    "power_weighted_phase_increment_rmse": 0.0060898951352797,
+    "max_absolute_phase_increment_error": 0.02824182264227998,
+    "diffuse_mse_200": 0.008847578789503437,
+    "diffuse_aligned_mse_200": 0.0017920072950713705,
+    "concentrated_mse_200": 0.035931317747669944,
+    "concentrated_aligned_mse_200": 0.008115524153048996
+  },
+  "test_ood": {
+    "mse_1": 2.007016918157497e-05,
+    "mse_200": 0.13171314132108766,
+    "endpoint_mse_200": 0.2600532546486911,
+    "aligned_mse_1": 2.8747642453240195e-07,
+    "aligned_mse_200": 0.0037200321435530937,
+    "aligned_endpoint_mse_200": 0.010795902092155257,
+    "phase_increment_rmse": 0.011095469292710687,
+    "wrapped_phase_increment_rmse": 0.011095469292710687,
+    "power_weighted_phase_increment_rmse": 0.013196690972220083,
+    "max_absolute_phase_increment_error": 0.051561097853703566,
+    "diffuse_mse_200": 0.06249579123786907,
+    "diffuse_aligned_mse_200": 0.0012787499806300195,
+    "concentrated_mse_200": 0.20093049140430622,
+    "concentrated_aligned_mse_200": 0.0061613143064761676
+  },
+  "jacobian": {
+    "1": {
+      "relative_frobenius_error_mean": 0.008154168365534646,
+      "relative_frobenius_error_max": 0.023329422028928275,
+      "minimum_singular_value": 0.9519827067125988,
+      "maximum_singular_value": 1.0504392495250414,
+      "maximum_condition_number": 1.1034226169427324,
+      "reference_minimum_singular_value": 0.9327027501824662,
+      "reference_maximum_singular_value": 1.072152944552129
+    },
+    "200": {
+      "relative_frobenius_error_mean": 0.900163592562319,
+      "relative_frobenius_error_max": 1.7199619165256077,
+      "minimum_singular_value": 0.05065352650825667,
+      "maximum_singular_value": 19.741962088996758,
+      "maximum_condition_number": 389.745067123387,
+      "reference_minimum_singular_value": 0.03580911850093075,
+      "reference_maximum_singular_value": 27.925847992433535
+    }
+  },
+  "certified_log_bound_one_step_global": 0.134582859684638,
+  "certified_log_bound_power_ball_4": 0.134582859684638,
+  "n_parameters": 4608,
+  "training_curve": [
+    {
+      "update": 0,
+      "validation_mse": 0.0009344577461922327
+    },
+    {
+      "update": 1,
+      "training_mse": 0.0009711541277532688,
+      "validation_mse": 0.0009238483429748492,
+      "elapsed_seconds": 0.2013403329765424
+    },
+    {
+      "update": 100,
+      "training_mse": 0.00030839666328904777,
+      "validation_mse": 0.00043125327587376577,
+      "elapsed_seconds": 0.2558404169976711
+    },
+    {
+      "update": 200,
+      "training_mse": 0.00023893628446076682,
+      "validation_mse": 0.00021546614642442606,
+      "elapsed_seconds": 0.30966104194521904
+    },
+    {
+      "update": 300,
+      "training_mse": 0.00010058437296213741,
+      "validation_mse": 0.0001133529740079843,
+      "elapsed_seconds": 0.36272137495689094
+    },
+    {
+      "update": 400,
+      "training_mse": 7.423859394070061e-05,
+      "validation_mse": 7.70156239469005e-05,
+      "elapsed_seconds": 0.415321166976355
+    },
+    {
+      "update": 500,
+      "training_mse": 7.710426227610826e-05,
+      "validation_mse": 6.599857017626246e-05,
+      "elapsed_seconds": 0.4684368330053985
+    },
+    {
+      "update": 600,
+      "training_mse": 6.228066336617064e-05,
+      "validation_mse": 6.0622824621226294e-05,
+      "elapsed_seconds": 0.5214674170129001
+    },
+    {
+      "update": 700,
+      "training_mse": 2.3884812730102785e-05,
+      "validation_mse": 5.682476437022921e-05,
+      "elapsed_seconds": 0.5744644579244778
+    },
+    {
+      "update": 800,
+      "training_mse": 5.2896477172280994e-05,
+      "validation_mse": 5.500786696405287e-05,
+      "elapsed_seconds": 0.6291843749349937
+    },
+    {
+      "update": 900,
+      "training_mse": 4.47227917338852e-05,
+      "validation_mse": 5.4070532574215e-05,
+      "elapsed_seconds": 0.6845936250174418
+    }
+  ],
+  "training_seconds": 0.6846414579777047,
+  "mode": "perspective_bounded",
+  "seed": 2,
+  "config_sha256": "841567210663b2584cc125c8c1279b84f6f256dc25bd0af6c3c33a3d0c632a92",
+  "target": "exact isolated Kerr phase, dt=.04; no full DNLS"
+}

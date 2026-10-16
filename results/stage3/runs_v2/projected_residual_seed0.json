@@ -1,0 +1,48 @@
+{
+  "seed": 0,
+  "mse_20": 0.0003388751802596638,
+  "mse_50": 0.0023121575663747856,
+  "mse_200": 0.061366217151874417,
+  "final_rel_norm_drift": 4.424781245118917e-15,
+  "max_rel_norm_drift": 1.4807637484498515e-14,
+  "rollout_ms": 3.587478946428746,
+  "timing_samples_ms": [
+    3.6889170296490192,
+    3.5599999828264117,
+    3.6154170520603657,
+    3.5249999491497874,
+    3.5805419320240617,
+    3.5944159608334303,
+    3.502208972349763,
+    3.515874966979027,
+    3.6189169622957706,
+    3.6264590453356504
+  ],
+  "n_parameters": 15585,
+  "config": {
+    "width": 96,
+    "depth": 2,
+    "horizon": 8,
+    "updates": 900,
+    "batch_size": 64,
+    "optimizer": "Adam",
+    "learning_rate": 0.003,
+    "cosine_final_fraction": 0.05,
+    "weight_decay": 0.0,
+    "precision": "float64",
+    "seeds": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "split_sha256": "17394ed7b789c0fc6b7379daf7cead1d1d7b957f267fd78528ef3e5e8a8cb983",
+    "code_sha256": {
+      "experiments/stage3_dnls_benchmark.py": "756ff6ecc7a9b0c4561d746f9aa59e3865988401e40c1efc038fb6318d687ea4",
+      "skipnorm/jax_layers.py": "78a37d8c207d2988c81b11b67346958e2d4d2d2b5ad3ae835299cf5866a9f8d7"
+    }
+  },
+  "checkpoint": "results/stage3/runs_v2/projected_residual_seed0.eqx",
+  "forecast": "results/stage3/runs_v2/projected_residual_seed0.npz"
+}

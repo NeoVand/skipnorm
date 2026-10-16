@@ -1,7 +1,8 @@
-"""Stage 3: Converged 1D Discrete Nonlinear Schrodinger (DNLS) Unitary Rollout Benchmark.
+"""Stage 3: Discrete Nonlinear Schrodinger (DNLS) norm-preserving rollout benchmark.
 
 Loads the locked whole-orbit disjoint DNLS dataset from data/splits/dnls_1d.npz (generated via
-10x sub-stepped RK4 with NO post-step norm projection; intrinsic RK4 drift = 3.67e-11).
+10x sub-stepped RK4 with no post-step norm projection. The independent reference
+audit is recorded in results/submission_validation.json).
 Compares 7 architectures across 5 seeds (0..4):
   1. Tangent-Projected Geodesic SkipNorm
   2. Projected Residual SkipNorm (without tangent projection)
@@ -14,7 +15,11 @@ Compares 7 architectures across 5 seeds (0..4):
 
 from __future__ import annotations
 
+import argparse
+import hashlib
 import json
+import platform
+import shutil
 import sys
 import time
 from pathlib import Path
@@ -60,7 +65,7 @@ class DNLSPropagator(eqx.Module):
             self.skew_param = jax.random.normal(key, (dim, dim), dtype=jnp.float64) * 0.05
         elif mode == "state_dep_orthogonal":
             # Low-rank skew-symmetric generator U(x) V(x)^T - V(x) U(x)^T with rank r=4
-            # parameterized via an MLP of matched parameter budget
+            # The larger output layer is counted explicitly; budgets are not matched.
             self.net = eqx.nn.MLP(dim, dim * 8, width, depth, activation=jax.nn.tanh, key=key)
             self.skew_param = None
         else:
@@ -151,8 +156,33 @@ def train_dnls_model(
     return model
 
 
+CONFIGS = [
+    ("Geodesic SkipNorm", "geodesic_skipnorm"),
+    ("Projected Residual SkipNorm", "projected_residual"),
+    ("State-Dependent SO(32)", "state_dep_orthogonal"),
+    ("Linear Orthogonal SO(32)", "linear_orthogonal"),
+    ("Pre-RMSNorm Residual", "pre_rmsnorm"),
+    ("Post-RMSNorm Residual", "post_rmsnorm"),
+    ("Unconstrained ResNet", "unconstrained"),
+]
+
+
+def sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--timing-only", action="store_true", help="Load saved checkpoints and repeat inference timing without training.")
+    parser.add_argument("--timing-repeats", type=int, default=10)
+    args = parser.parse_args()
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    runs_dir = RESULTS_DIR / "runs_v2"
+    runs_dir.mkdir(exist_ok=True)
+    out_path = RESULTS_DIR / "stage3_dnls_results.json"
+    archive_path = RESULTS_DIR / "stage3_dnls_results_pre_revision.json"
+    if out_path.exists() and not archive_path.exists():
+        shutil.copy2(out_path, archive_path)
     split = np.load(DATA_DIR / "dnls_1d.npz")
     tr_orbits = jnp.asarray(split["train_orbits"])
     te_long = jnp.asarray(split["test_orbits_long"])  # (12, 250, 32)
@@ -164,22 +194,17 @@ def main() -> None:
         np.abs(gt_norms - gt_norms[:, :1]) / gt_norms[:, :1], axis=0
     ).tolist()
 
-    configs = [
-        ("Geodesic SkipNorm", "geodesic_skipnorm"),
-        ("Projected Residual SkipNorm", "projected_residual"),
-        ("State-Dependent SO(32)", "state_dep_orthogonal"),
-        ("Linear Orthogonal SO(32)", "linear_orthogonal"),
-        ("Pre-RMSNorm Residual", "pre_rmsnorm"),
-        ("Post-RMSNorm Residual", "post_rmsnorm"),
-        ("Unconstrained ResNet", "unconstrained"),
-    ]
-
     seeds = [0, 1, 2, 3, 4]
+    code_hashes = {p: sha256(ROOT / p) for p in ["experiments/stage3_dnls_benchmark.py", "skipnorm/jax_layers.py"]}
+    run_config = {"width": 96, "depth": 2, "horizon": 8, "updates": 900, "batch_size": 64,
+                  "optimizer": "Adam", "learning_rate": 0.003, "cosine_final_fraction": 0.05,
+                  "weight_decay": 0.0, "precision": "float64", "seeds": seeds,
+                  "split_sha256": sha256(DATA_DIR / "dnls_1d.npz"), "code_sha256": code_hashes}
     summary = {}
     drift_traces = {"t_steps": list(range(T_long + 1)), "RK4 Reference (No Proj)": gt_rel_drift_trace}
     mse_traces = {"t_steps": list(range(1, T_long + 1))}
 
-    for label, mode in configs:
+    for label, mode in CONFIGS:
         seed_records = []
         mode_drift_curves = []
         mode_mse_curves = []
@@ -187,7 +212,21 @@ def main() -> None:
         for s in seeds:
             key = jax.random.PRNGKey(7000 + 89 * s)
             model = DNLSPropagator(dim=32, mode=mode, width=96, depth=2, key=key)
-            model = train_dnls_model(model, tr_orbits, horizon=8, steps=900, lr=3e-3, seed=s)
+            checkpoint = runs_dir / f"{mode}_seed{s}.eqx"
+            record_path = runs_dir / f"{mode}_seed{s}.json"
+            forecast_path = runs_dir / f"{mode}_seed{s}.npz"
+            old = json.loads(record_path.read_text()) if record_path.exists() else None
+            if old is not None and old.get("config") != run_config:
+                raise RuntimeError(f"Stale run configuration at {record_path}; preserve it and use a new run directory.")
+            if old is not None and checkpoint.exists():
+                model = eqx.tree_deserialise_leaves(checkpoint, model)
+            else:
+                if args.timing_only:
+                    raise RuntimeError(f"Missing checkpoint: {checkpoint}")
+                print(f"[DNLS] Training {label}, seed {s}", flush=True)
+                model = train_dnls_model(model, tr_orbits, horizon=8, steps=900, lr=3e-3, seed=s)
+                eqx.tree_serialise_leaves(checkpoint, model)
+            n_parameters = sum(int(x.size) for x in jax.tree_util.tree_leaves(eqx.filter(model, eqx.is_inexact_array)) if x is not None)
 
             @eqx.filter_jit
             def rollout_long(x0_batch):
@@ -197,11 +236,14 @@ def main() -> None:
                 _, xr = jax.lax.scan(step_fn, x0_batch, jnp.arange(T_long))
                 return jnp.swapaxes(xr, 0, 1)
 
-            # Warmup & time inference
+            # Compile/warm up separately; each timing covers the full 12-trajectory batch.
             _ = rollout_long(te_long[:, 0, :]).block_until_ready()
-            t0 = time.perf_counter()
-            pred_long = rollout_long(te_long[:, 0, :]).block_until_ready()
-            elapsed_ms = (time.perf_counter() - t0) * 1000.0
+            timings = []
+            for _ in range(args.timing_repeats):
+                t0 = time.perf_counter()
+                pred_long = rollout_long(te_long[:, 0, :]).block_until_ready()
+                timings.append((time.perf_counter() - t0) * 1000.0)
+            elapsed_ms = float(np.median(timings))
 
             pred_full = np.concatenate(
                 [np.asarray(te_long[:, :1, :]), np.asarray(pred_long)], axis=1
@@ -216,9 +258,9 @@ def main() -> None:
             mse_50 = float(np.mean(sq_err_t[:50]))
             mse_200 = float(np.mean(sq_err_t[:200]))
             final_rel_norm_drift = float(mean_drift_curve[-1])
-            max_rel_norm_drift = float(np.max(mean_drift_curve))
+            max_rel_norm_drift = float(np.max(rel_drift_t))
 
-            seed_records.append({
+            record = {
                 "seed": s,
                 "mse_20": mse_20,
                 "mse_50": mse_50,
@@ -226,30 +268,41 @@ def main() -> None:
                 "final_rel_norm_drift": final_rel_norm_drift,
                 "max_rel_norm_drift": max_rel_norm_drift,
                 "rollout_ms": elapsed_ms,
-            })
+                "timing_samples_ms": timings,
+                "n_parameters": n_parameters,
+                "config": run_config,
+                "checkpoint": str(checkpoint.relative_to(ROOT)),
+                "forecast": str(forecast_path.relative_to(ROOT)),
+            }
+            record_path.write_text(json.dumps(record, indent=2) + "\n")
+            np.savez_compressed(forecast_path, predictions=pred_full, targets=np.asarray(te_long),
+                                relative_power_drift=rel_drift_t, per_step_mse=sq_err_t)
+            seed_records.append(record)
             mode_drift_curves.append(mean_drift_curve)
             mode_mse_curves.append(sq_err_t)
 
         drift_traces[label] = {
             "mean": np.mean(mode_drift_curves, axis=0).tolist(),
-            "std": np.std(mode_drift_curves, axis=0).tolist(),
+            "std": np.std(mode_drift_curves, axis=0, ddof=1).tolist(),
         }
         mse_traces[label] = {
             "mean": np.mean(mode_mse_curves, axis=0).tolist(),
-            "std": np.std(mode_mse_curves, axis=0).tolist(),
+            "std": np.std(mode_mse_curves, axis=0, ddof=1).tolist(),
         }
 
         summary[label] = {
             "seeds": seed_records,
             "mse_20_mean": float(np.mean([r["mse_20"] for r in seed_records])),
-            "mse_20_std": float(np.std([r["mse_20"] for r in seed_records])),
+            "mse_20_std": float(np.std([r["mse_20"] for r in seed_records], ddof=1)),
             "mse_50_mean": float(np.mean([r["mse_50"] for r in seed_records])),
-            "mse_50_std": float(np.std([r["mse_50"] for r in seed_records])),
+            "mse_50_std": float(np.std([r["mse_50"] for r in seed_records], ddof=1)),
             "mse_200_mean": float(np.mean([r["mse_200"] for r in seed_records])),
-            "mse_200_std": float(np.std([r["mse_200"] for r in seed_records])),
+            "mse_200_std": float(np.std([r["mse_200"] for r in seed_records], ddof=1)),
             "max_rel_norm_drift_mean": float(np.mean([r["max_rel_norm_drift"] for r in seed_records])),
-            "max_rel_norm_drift_std": float(np.std([r["max_rel_norm_drift"] for r in seed_records])),
+            "max_rel_norm_drift_std": float(np.std([r["max_rel_norm_drift"] for r in seed_records], ddof=1)),
             "rollout_ms_mean": float(np.mean([r["rollout_ms"] for r in seed_records])),
+            "rollout_ms_std": float(np.std([r["rollout_ms"] for r in seed_records], ddof=1)),
+            "n_parameters": n_parameters,
         }
         print(
             f"  [DNLS] {label:28s} | MSE@20={summary[label]['mse_20_mean']:.5f} "
@@ -258,10 +311,20 @@ def main() -> None:
             f"| Time={summary[label]['rollout_ms_mean']:.2f}ms"
         )
 
-    out_path = RESULTS_DIR / "stage3_dnls_results.json"
     out_path.write_text(
         json.dumps(
             {
+                "schema_version": 2,
+                "config": run_config,
+                "evaluation": {"test_trajectories": int(te_long.shape[0]), "prediction_steps": int(T_long),
+                               "mse": "mean squared state error over coordinates, test trajectories and steps 1 through H",
+                               "max_relative_power_drift": "maximum over all test trajectories and rollout steps, summarized across seeds",
+                               "uncertainty": "sample SD across five training seeds (ddof=1); one fixed data split",
+                               "timing": f"median of {args.timing_repeats} synchronized warm inference calls, full test batch; excludes compilation",
+                               "timing_only_pass": args.timing_only},
+                "environment": {"platform": platform.platform(), "machine": platform.machine(),
+                                "jax": jax.__version__, "equinox": eqx.__version__,
+                                "devices": [str(d) for d in jax.devices()]},
                 "summary": summary,
                 "drift_traces": drift_traces,
                 "mse_traces": mse_traces,

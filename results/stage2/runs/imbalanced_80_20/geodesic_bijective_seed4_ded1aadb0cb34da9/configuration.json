@@ -1,0 +1,48 @@
+{
+  "configuration": {
+    "protocol_version": "stage2-v2-heldout-calibration",
+    "suite": "imbalanced_80_20",
+    "mode": "geodesic_bijective",
+    "seed": 4,
+    "initialization_key_seed": 1412,
+    "width": 48,
+    "depth": 2,
+    "dim": 2,
+    "num_blocks": 1,
+    "steps": 1000,
+    "batch_size": 64,
+    "optimizer": "Adam",
+    "learning_rate": 0.003,
+    "schedule": "cosine decay to 0.05 of initial rate",
+    "dt": 0.05,
+    "stride": 3,
+    "rollout_horizon": 12,
+    "physical_eval_horizon": 1.8000000000000003,
+    "reflection_quotient": false,
+    "latent_prior": "radius-only frequency, f_k=omega_k(radii) J z_k",
+    "encoder_origin_pinned": true,
+    "loss": "reconstruction MSE + rollout MSE + 1.5*one-step latent MSE + multi-step latent MSE",
+    "quotient_loss_note": null,
+    "invariant_labels_used_in_training": false,
+    "split_file": "data/splits/double_well_imbalanced.npz",
+    "split_sha256": "09fd2e58072d2bc9f0d9eba64b169455d3ac9436c1350d6918c02260f278ca68",
+    "source_sha256": {
+      "experiments/stage2_foliation_and_obstructions.py": "baa53642045d138a98f7e47b9eb40b865fd61a5d70d2195d7ca62b2e165f03b4",
+      "skipnorm/metrics.py": "2eab1500829a9e1dd4c1ac1f576a18b63a37f8ef84556ab676e22729283a052e",
+      "skipnorm/jax_layers.py": "78a37d8c207d2988c81b11b67346958e2d4d2d2b5ad3ae835299cf5866a9f8d7"
+    },
+    "seed_sd_ddof": 1,
+    "isotonic_protocol": "train-fitted invariant-to-mean-radius; direction by training SSE; linear interpolation; boundary clipping; untruncated test R2",
+    "ovr_protocol": "within/total; total and between variances must exceed (1e-4*training centered RMS latent spread)^2"
+  },
+  "training_seconds": 13.862192792003043,
+  "parameter_count": 32462,
+  "jax_version": "0.11.2",
+  "numpy_version": "2.5.4",
+  "backend": "cpu",
+  "devices": [
+    "cpu:0"
+  ],
+  "platform": "macOS-26.3-arm64-arm-64bit-Mach-O",
+  "completed_utc": "2026-10-15T16:52:32.586918+00:00"
+}

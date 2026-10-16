@@ -1,0 +1,62 @@
+{
+  "test": {
+    "persistence": {
+      "position_rmse": 0.46975229619065256,
+      "position_nrmse": 1.614213525378419,
+      "velocity_fd_rmse": 0.43027698094622135,
+      "valid_horizon_mean": 2.75,
+      "valid_horizon_median": 2.5,
+      "valid_horizon_threshold": 0.3,
+      "finite_fraction": 1.0,
+      "position_nrmse_8": 0.5616131018191417,
+      "position_nrmse_20": 1.3961995827694593,
+      "position_nrmse_50": 1.7250883494120666,
+      "position_nrmse_100": 1.6613262256817538,
+      "position_nrmse_197": 1.614213525378419
+    },
+    "constant_velocity": {
+      "position_rmse": 2.985395659413758,
+      "position_nrmse": 10.361571151971674,
+      "velocity_fd_rmse": 0.5422253876463465,
+      "valid_horizon_mean": 5.625,
+      "valid_horizon_median": 5.5,
+      "valid_horizon_threshold": 0.3,
+      "finite_fraction": 1.0,
+      "position_nrmse_8": 0.27708933510369793,
+      "position_nrmse_20": 1.0937091379023471,
+      "position_nrmse_50": 3.125435792462843,
+      "position_nrmse_100": 5.352898564066633,
+      "position_nrmse_197": 10.361571151971674
+    }
+  },
+  "ood": {
+    "persistence": {
+      "position_rmse": 0.8288980112487156,
+      "position_nrmse": 2.8642351243512176,
+      "velocity_fd_rmse": 0.8544950263201233,
+      "valid_horizon_mean": 1.625,
+      "valid_horizon_median": 1.0,
+      "valid_horizon_threshold": 0.3,
+      "finite_fraction": 1.0,
+      "position_nrmse_8": 1.0851115566462985,
+      "position_nrmse_20": 2.614086030550959,
+      "position_nrmse_50": 2.857254119928854,
+      "position_nrmse_100": 2.850340801258828,
+      "position_nrmse_197": 2.8642351243512176
+    },
+    "constant_velocity": {
+      "position_rmse": 5.934284470922603,
+      "position_nrmse": 20.56153283598457,
+      "velocity_fd_rmse": 1.0736984819425317,
+      "valid_horizon_mean": 3.125,
+      "valid_horizon_median": 3.0,
+      "valid_horizon_threshold": 0.3,
+      "finite_fraction": 1.0,
+      "position_nrmse_8": 0.6354614740910901,
+      "position_nrmse_20": 2.462661402957503,
+      "position_nrmse_50": 6.234124958877817,
+      "position_nrmse_100": 10.806988010980147,
+      "position_nrmse_197": 20.56153283598457
+    }
+  }
+}

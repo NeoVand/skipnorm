@@ -1,0 +1,178 @@
+{
+  "config": {
+    "updates": 8000,
+    "warmup": 4000,
+    "batch_size": 32,
+    "horizon": 24,
+    "history": 3,
+    "width": 64,
+    "latent_dim": 16,
+    "learning_rate": 0.001,
+    "validate_every": 200,
+    "eval_count": 32,
+    "image_shape": [
+      24,
+      48
+    ],
+    "dt": 0.08,
+    "reconstruction_weight": 0.5,
+    "train_steps": 40,
+    "data_sha256": "55b65ebf143bd4585b2660c9c9e2eccb4a4239df6191e68936eb155fc8613626",
+    "selection": "minimum short-horizon ID validation pixel loss"
+  },
+  "planned_kinds": [
+    "residual",
+    "prenorm",
+    "scale",
+    "projected",
+    "geodesic",
+    "rotation",
+    "linear_orthogonal",
+    "hamiltonian"
+  ],
+  "planned_seeds": [
+    0
+  ],
+  "source_sha256": {
+    "experiments/stage8_visual_world_model.py": "d517b72745bc9cc5379940e4d676a3b9b23c64e74485d6dd92f75e095e7ad719",
+    "experiments/visual_physics_data.py": "d12ff6c2d27f0cf326c59bc0043fd74aeb2e15baf078719bd2355829994043a5",
+    "experiments/visual_physics_models.py": "bb25154256a2a13e3822898d23cf54df8fea218d63c71b61da51756185a35d13",
+    "skipnorm/jax_layers.py": "78a37d8c207d2988c81b11b67346958e2d4d2d2b5ad3ae835299cf5866a9f8d7",
+    "skipnorm/rotation_coupling.py": "290e8c0f1bb04e9d3233620cb1c0e545920e11215f0b84041e991475f37aefde"
+  },
+  "data_metadata": {
+    "amplitude_definition": "Initial per-mass phase-space radius sqrt(q_i^2+p_i^2); independent uniform amplitudes and phases.",
+    "appearance": "Identical unlabelled Gaussian spots; no appearance OOD in this pilot.",
+    "column_centers": [
+      5.5,
+      17.5,
+      29.5,
+      41.5
+    ],
+    "coupling": 0.35,
+    "hamiltonian": "sum_i(p_i^2/2 + omega_squared_i*q_i^2/2 + quartic*q_i^4/4) + coupling/2*sum_i(q_(i+1)-q_i)^2",
+    "image_shape": [
+      24,
+      48
+    ],
+    "mass": 1.0,
+    "observation_dt": 0.08,
+    "omega_squared": [
+      1.0,
+      1.15,
+      0.85,
+      1.3
+    ],
+    "pixels_per_position": 4.5,
+    "quartic": 2.0,
+    "schema_version": 1,
+    "seed": 0,
+    "splits": {
+      "ood": {
+        "amplitude_range": [
+          0.8,
+          1.0
+        ],
+        "center_row_max": 17.34957416704491,
+        "center_row_min": 5.852701795668179,
+        "clipped_four_sigma_cores": 0,
+        "duration": 15.92,
+        "initial_energy_max": 4.074105929885479,
+        "initial_energy_min": 1.6577265292368724,
+        "max_relative_energy_error": 1.904222324810354e-05,
+        "n_trajectories": 64,
+        "observations": 200,
+        "out_of_frame_centers": 0,
+        "position_max": 1.2549551565181825,
+        "position_min": -1.2999053704544246,
+        "seed_spawn_key": [
+          3
+        ]
+      },
+      "test": {
+        "amplitude_range": [
+          0.25,
+          0.65
+        ],
+        "center_row_max": 15.198349818282795,
+        "center_row_min": 7.911203453445299,
+        "clipped_four_sigma_cores": 0,
+        "duration": 15.92,
+        "initial_energy_max": 0.9752569696816619,
+        "initial_energy_min": 0.2715965881957078,
+        "max_relative_energy_error": 1.2559496784322871e-05,
+        "n_trajectories": 64,
+        "observations": 200,
+        "out_of_frame_centers": 0,
+        "position_max": 0.7975103436788226,
+        "position_min": -0.8218555151739544,
+        "seed_spawn_key": [
+          2
+        ]
+      },
+      "train": {
+        "amplitude_range": [
+          0.25,
+          0.65
+        ],
+        "center_row_max": 14.727433664772338,
+        "center_row_min": 8.191778336775116,
+        "clipped_four_sigma_cores": 0,
+        "duration": 3.12,
+        "initial_energy_max": 1.40340937742818,
+        "initial_energy_min": 0.2572710210579189,
+        "max_relative_energy_error": 1.5239677653882265e-05,
+        "n_trajectories": 256,
+        "observations": 40,
+        "out_of_frame_centers": 0,
+        "position_max": 0.73516036960553,
+        "position_min": -0.7172074810605195,
+        "seed_spawn_key": [
+          0
+        ]
+      },
+      "val": {
+        "amplitude_range": [
+          0.25,
+          0.65
+        ],
+        "center_row_max": 14.959082920709298,
+        "center_row_min": 8.056196722406389,
+        "clipped_four_sigma_cores": 0,
+        "duration": 15.92,
+        "initial_energy_max": 0.9107437110195542,
+        "initial_energy_min": 0.3014536858717559,
+        "max_relative_energy_error": 1.352903878183039e-05,
+        "n_trajectories": 64,
+        "observations": 200,
+        "out_of_frame_centers": 0,
+        "position_max": 0.7652896172430246,
+        "position_min": -0.7686850934909549,
+        "seed_spawn_key": [
+          1
+        ]
+      }
+    },
+    "spot_sigma_xy": [
+      1.0,
+      0.8
+    ],
+    "state_order": [
+      "q0",
+      "q1",
+      "q2",
+      "q3",
+      "p0",
+      "p1",
+      "p2",
+      "p3"
+    ],
+    "training_inputs": "Images only. Physical states and metadata are evaluation-only.",
+    "verlet_substeps": 16
+  },
+  "python": "3.13.12",
+  "jax": "0.11.2",
+  "devices": [
+    "cpu:0"
+  ]
+}

@@ -4,7 +4,7 @@ Implements:
 1. Within-Orbit Radial Coefficient of Variation (CV_O(h)) evaluated strictly on encoded true trajectories E(x_t).
 2. Orbit-Variance Ratio (OVR) with a degenerate-denominator guard based on training-set latent spread sigma_lat.
 3. Monotone Isotonic Regression R^2 and Spearman Rank Correlation |rho_S| across held-out test orbits.
-4. Multi-Invariant Readout R^2 (Linear Ridge and 2-Layer MLP) from single total radius vs. K-block radii.
+4. Train-fitted linear and degree-two ridge readouts from total radius vs. block radii.
 """
 
 from __future__ import annotations
@@ -14,6 +14,18 @@ from typing import Any
 import numpy as np
 from scipy.optimize import isotonic_regression
 from scipy.stats import spearmanr
+
+
+def centered_rms_spread(train_latents: np.ndarray) -> float:
+    """RMS Euclidean distance from the training-set mean latent vector.
+
+    The last axis indexes coordinates; all preceding axes index observations.
+    A scalar invariant must be supplied with a singleton coordinate axis.
+    This scale is invariant to translation and scales linearly under rescaling.
+    """
+    z = np.asarray(train_latents, dtype=np.float64)
+    samples = z.reshape(-1, z.shape[-1])
+    return float(np.sqrt(np.mean(np.sum((samples - samples.mean(axis=0)) ** 2, axis=-1))))
 
 
 def compute_orbit_radii(z_orbits: np.ndarray, num_blocks: int = 1) -> np.ndarray:
@@ -74,8 +86,10 @@ def compute_ovr(
     total_var = float(np.var(r))
     between_var = float(np.var(np.squeeze(r_bar_m, axis=1)))
 
-    threshold = max((min_spread_ratio * max(sigma_lat, 1e-12)) ** 2, 1e-24)
-    if total_var < threshold or between_var < threshold:
+    if not np.isfinite(sigma_lat) or sigma_lat < 0:
+        raise ValueError("sigma_lat must be a finite nonnegative training-set spread")
+    threshold = (min_spread_ratio * sigma_lat) ** 2
+    if total_var <= threshold or between_var <= threshold or sigma_lat == 0:
         return {
             "ovr": None,
             "status": "undefined (collapsed)",
@@ -94,49 +108,72 @@ def compute_ovr(
 
 
 def compute_monotone_r2_and_spearman(
-    true_c: np.ndarray,
-    orbit_mean_radii: np.ndarray,
-) -> dict[str, float]:
-    """Compute monotone Isotonic Regression R^2 and absolute Spearman rank correlation |rho_S|
-    between true orbit invariant values c_m and mean encoded radii r_bar_m.
+    train_c: np.ndarray,
+    train_mean_radii: np.ndarray,
+    test_c: np.ndarray,
+    test_mean_radii: np.ndarray,
+) -> dict[str, Any]:
+    """Fit psi: invariant -> mean radius on training orbits and score test orbits.
 
-    Checks both increasing and decreasing isotonic fits since Theorem 1 allows
-    strictly increasing or strictly decreasing psi(c).
+    Increasing/decreasing direction minimizes training SSE only. Repeated training
+    labels are pooled with count weights; interpolation is linear between fitted
+    knots and constant beyond the training label range. Test R² is not clipped.
+    Spearman is a separate descriptive correlation on the held-out orbit pairs.
     """
-    c = np.asarray(true_c, dtype=np.float64).ravel()
-    r = np.asarray(orbit_mean_radii, dtype=np.float64).ravel()
-
-    order = np.argsort(c)
-    c_sorted = c[order]
-    r_sorted = r[order]
-
-    var_r = float(np.var(r_sorted))
-    if var_r < 1e-20:
-        return {
-            "isotonic_r2": 0.0,
-            "spearman_abs_rho": 0.0,
-            "spearman_rho": 0.0,
-            "direction": "collapsed",
-        }
-
-    iso_inc = isotonic_regression(r_sorted, increasing=True).x
-    iso_dec = isotonic_regression(r_sorted, increasing=False).x
-
-    r2_inc = 1.0 - float(np.mean(np.square(r_sorted - iso_inc))) / var_r
-    r2_dec = 1.0 - float(np.mean(np.square(r_sorted - iso_dec))) / var_r
-
-    best_r2 = max(0.0, max(r2_inc, r2_dec))
-    direction = "increasing" if r2_inc >= r2_dec else "decreasing"
-
-    rho_res = spearmanr(c_sorted, r_sorted)
-    rho_val = 0.0 if np.isnan(rho_res.statistic) else float(rho_res.statistic)
-
+    c_tr = np.asarray(train_c, dtype=np.float64).ravel()
+    r_tr = np.asarray(train_mean_radii, dtype=np.float64).ravel()
+    c_te = np.asarray(test_c, dtype=np.float64).ravel()
+    r_te = np.asarray(test_mean_radii, dtype=np.float64).ravel()
+    if len(c_tr) != len(r_tr) or len(c_te) != len(r_te) or len(c_tr) < 2:
+        raise ValueError("Aligned training and test orbit pairs are required")
+    knots, inverse, counts = np.unique(c_tr, return_inverse=True, return_counts=True)
+    pooled = np.bincount(inverse, weights=r_tr) / counts
+    fitted = {}
+    errors = {}
+    for direction, increasing in (("increasing", True), ("decreasing", False)):
+        fitted[direction] = isotonic_regression(pooled, weights=counts, increasing=increasing).x
+        errors[direction] = float(np.mean((r_tr - fitted[direction][inverse]) ** 2))
+    direction = min(errors, key=errors.get)
+    predictions = np.interp(c_te, knots, fitted[direction])
+    variance = float(np.var(r_te))
+    test_r2 = None if variance == 0 else float(1.0 - np.mean((r_te - predictions) ** 2) / variance)
+    rho = 0.0 if np.ptp(c_te) == 0 or np.ptp(r_te) == 0 else float(spearmanr(c_te, r_te).statistic)
     return {
-        "isotonic_r2": float(best_r2),
-        "spearman_abs_rho": float(abs(rho_val)),
-        "spearman_rho": float(rho_val),
+        "isotonic_r2": test_r2,
+        "spearman_abs_rho": abs(rho),
+        "spearman_rho": rho,
         "direction": direction,
+        "train_mse": errors[direction],
+        "test_predictions": predictions.tolist(),
+        "train_knots": knots.tolist(),
+        "fitted_train_radii": fitted[direction].tolist(),
+        "test_outside_training_range": int(np.sum((c_te < knots[0]) | (c_te > knots[-1]))),
     }
+
+
+def compute_radius_threshold_probe(
+    train_radii: np.ndarray, train_labels: np.ndarray,
+    test_radii: np.ndarray, test_labels: np.ndarray,
+) -> dict[str, Any]:
+    """Fit a one-dimensional threshold and orientation using training labels only."""
+    x = np.asarray(train_radii).ravel()
+    y = np.asarray(train_labels).ravel().astype(bool)
+    values = np.unique(x)
+    thresholds = np.r_[np.nextafter(values[0], -np.inf),
+                       (values[:-1] + values[1:]) / 2,
+                       np.nextafter(values[-1], np.inf)]
+    best = (-1.0, float(thresholds[0]), True)
+    for threshold in thresholds:
+        for high_is_one in (True, False):
+            pred = (x >= threshold) if high_is_one else (x < threshold)
+            score = float(np.mean(pred == y))
+            if score > best[0]:
+                best = (score, float(threshold), high_is_one)
+    score, threshold, high_is_one = best
+    x_te = np.asarray(test_radii).ravel()
+    pred_te = (x_te >= threshold) if high_is_one else (x_te < threshold)
+    return {"accuracy": float(np.mean(pred_te == np.asarray(test_labels).ravel())),
+            "training_accuracy": score, "threshold": threshold, "high_is_one": high_is_one}
 
 
 def compute_k_invariant_readout_r2(
@@ -200,12 +237,16 @@ def compute_k_invariant_readout_r2(
         var_y = float(np.var(Y_te[:, k]))
         mse_lin = float(np.mean(np.square(Y_te[:, k] - Y_pred_lin[:, k])))
         mse_poly = float(np.mean(np.square(Y_te[:, k] - Y_pred_poly[:, k])))
-        r2_lin_per_inv.append(max(0.0, 1.0 - mse_lin / max(var_y, 1e-16)))
-        r2_poly_per_inv.append(max(0.0, 1.0 - mse_poly / max(var_y, 1e-16)))
+        if var_y == 0:
+            raise ValueError("Test invariants must have nonzero variance")
+        r2_lin_per_inv.append(1.0 - mse_lin / var_y)
+        r2_poly_per_inv.append(1.0 - mse_poly / var_y)
 
     return {
         "linear_r2_mean": float(np.mean(r2_lin_per_inv)),
         "linear_r2_per_invariant": r2_lin_per_inv,
         "nonlinear_r2_mean": float(np.mean(r2_poly_per_inv)),
         "nonlinear_r2_per_invariant": r2_poly_per_inv,
+        "linear_test_predictions": Y_pred_lin.tolist(),
+        "nonlinear_test_predictions": Y_pred_poly.tolist(),
     }

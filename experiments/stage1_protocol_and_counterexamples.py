@@ -22,7 +22,10 @@ Verifies and exports JSON provenance for:
 from __future__ import annotations
 
 import hashlib
+import argparse
+import hashlib
 import json
+import shutil
 from pathlib import Path
 
 import sys
@@ -271,7 +274,7 @@ def verify_proposition_2() -> dict:
     depth_traces = {
         "depths": depth_steps,
         "Geodesic SkipNorm": {"act_norm": [], "radial_grad_norm": []},
-        "SkipNorm (LeakyReLU)": {"act_norm": [], "radial_grad_norm": []},
+        "SkipNorm (Tanh)": {"act_norm": [], "radial_grad_norm": []},
         "RMSNorm (eps=1e-1)": {"act_norm": [], "radial_grad_norm": []},
         "RMSNorm (eps=1e-2)": {"act_norm": [], "radial_grad_norm": []},
         "Unnormalized MLP": {"act_norm": [], "radial_grad_norm": []},
@@ -285,7 +288,7 @@ def verify_proposition_2() -> dict:
                 Q_i = orth_weights[i]
                 if mode == "Geodesic SkipNorm":
                     h = geodesic_skip_norm_fn(h, jnp.tanh(W_i @ h), alpha=0.25, eps=1e-30)
-                elif mode == "SkipNorm (LeakyReLU)":
+                elif mode == "SkipNorm (Tanh)":
                     h = skip_norm_fn(
                         h, jnp.tanh(W_i @ h), p=2.0, eps=1e-30
                     )
@@ -354,11 +357,11 @@ def verify_resonant_harmonic_oscillator_control() -> dict:
 
     H(q1, p1, q2, p2) = 0.5 * (q1^2 + p1^2 + q2^2 + p2^2).
     Every orbit has period 2*pi and is a closed 1D circle inside the 3-sphere H^{-1}(c) = S^3(sqrt(2c)).
-    We construct an explicit global homeomorphism E: R^4 -> R^4:
-        E(q1, p1, q2, p2) = (1 + 0.5 * (q1^2 + p1^2) / (q1^2 + p1^2 + q2^2 + p2^2)) * (q1, p1, q2, p2)
+    We construct the global linear diffeomorphism used in the manuscript:
+        E(q1, p1, q2, p2) = (sqrt(2)*q1, sqrt(2)*p1, q2, p2)
     which commutes EXACTLY with the 1:1 harmonic flow (so ||E(F(x)) - g(E(x))|| = 0 and
     within-orbit radial CV = 0 on every trajectory), yet ||E(x)||_2 varies between sqrt(2c)
-    and 1.5 * sqrt(2c) on the SAME energy level set H^{-1}(c)!
+    and 2 * sqrt(c) on the SAME energy level set H^{-1}(c).
     """
     dt = 0.1
     steps = 60
@@ -383,10 +386,7 @@ def verify_resonant_harmonic_oscillator_control() -> dict:
     )
 
     def E_map(x: np.ndarray) -> np.ndarray:
-        r1_sq = x[..., 0] ** 2 + x[..., 1] ** 2
-        r_tot_sq = np.sum(x**2, axis=-1)
-        scale = 1.0 + 0.5 * (r1_sq / np.maximum(r_tot_sq, 1e-30))
-        return x * scale[..., None]
+        return x * np.array([np.sqrt(2.), np.sqrt(2.), 1., 1.])
 
     for eta in etas:
         r1 = np.sqrt(2.0 * c_energy * eta)
@@ -829,7 +829,14 @@ def generate_whole_orbit_datasets() -> dict:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--checks-only", action="store_true", help="Retain the locked dataset files and rerun analytical checks only.")
+    args = parser.parse_args()
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    out_path = RESULTS_DIR / "stage1_results.json"
+    archive_path = RESULTS_DIR / "stage1_results_pre_revision.json"
+    if out_path.exists() and not archive_path.exists():
+        shutil.copy2(out_path, archive_path)
     print("[Stage 1] Running Proposition 1 verifications & counterexamples...")
     prop1 = verify_proposition_1()
     print(
@@ -868,14 +875,23 @@ def main() -> None:
         f"mean_radial_cv={translated_ctrl['shift_sweep'][-1]['mean_radial_cv']:.3e}"
     )
 
-    print("[Stage 1] Generating whole-orbit disjoint dataset splits with SHA-256 manifests...")
-    splits_manifest = generate_whole_orbit_datasets()
+    if args.checks_only:
+        splits_manifest = json.loads((DATA_DIR / "splits_manifest.json").read_text())
+        for record in splits_manifest.values():
+            actual = hashlib.sha256((ROOT / record["file"]).read_bytes()).hexdigest()
+            if actual != record["sha256"]:
+                raise RuntimeError(f"Dataset hash mismatch: {record['file']}")
+    else:
+        print("[Stage 1] Generating whole-orbit disjoint dataset splits with SHA-256 manifests...")
+        splits_manifest = generate_whole_orbit_datasets()
     print(
         f"  -> DNLS intrinsic RK4 relative norm drift (no projection, 250 steps): "
         f"{splits_manifest['dnls_1d']['meta']['max_intrinsic_rk4_relative_norm_drift']:.3e}"
     )
 
     stage1_out = {
+        "schema_version": 2,
+        "code_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "proposition_1": prop1,
         "proposition_2": prop2,
         "antipodal_sign_flip": antipodal,

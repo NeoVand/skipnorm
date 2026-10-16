@@ -128,11 +128,33 @@ class TestJaxSkipNorm(unittest.TestCase):
         r_clean = np.repeat(c_vals[:, None] ** 2, 40, axis=1)
         cv_clean = compute_radial_cv(r_clean)
         ovr_clean = compute_ovr(r_clean, sigma_lat=1.0)
-        mono_clean = compute_monotone_r2_and_spearman(c_vals, np.mean(r_clean, axis=1))
+        c_train = np.linspace(0.5, 5.5, 41)
+        mono_clean = compute_monotone_r2_and_spearman(c_train, c_train, c_vals, c_vals)
         self.assertLess(cv_clean["mean_cv"], 1e-15)
         self.assertLess(ovr_clean["ovr"], 1e-15)
         self.assertGreater(mono_clean["isotonic_r2"], 0.999999)
         self.assertGreater(mono_clean["spearman_abs_rho"], 0.999999)
+
+    def test_invertible_branch_does_not_imply_full_skipnorm_rank(self):
+        x = jnp.array([1.0, 0.0])
+        A = jnp.array([[1.0, 1.0], [1.0, 0.0]])
+        def layer(z):
+            y = A @ z + jnp.array([0.0, -1.0])
+            return jnp.linalg.norm(z) * y / jnp.linalg.norm(y)
+        J = jax.jacfwd(layer)(x)
+        np.testing.assert_allclose(J, [[1., 0.], [1., 0.]], atol=1e-14)
+        self.assertEqual(np.linalg.matrix_rank(np.asarray(A)), 2)
+        self.assertEqual(np.linalg.matrix_rank(np.asarray(J)), 1)
+
+    def test_radial_shear_can_coexist_with_another_unit_singular_value(self):
+        def twist(x):
+            a = jnp.log(jnp.linalg.norm(x))
+            return jnp.array([jnp.cos(a)*x[0]-jnp.sin(a)*x[1],
+                              jnp.sin(a)*x[0]+jnp.cos(a)*x[1], x[2]])
+        x = jnp.array([1., 0., 0.])
+        J = jax.jacfwd(twist)(x)
+        self.assertGreater(float(jnp.linalg.norm(J @ x - x)), 0.5)
+        self.assertLess(float(jnp.min(jnp.abs(jnp.linalg.svd(J, compute_uv=False)-1))), 1e-14)
 
 
 if __name__ == "__main__":

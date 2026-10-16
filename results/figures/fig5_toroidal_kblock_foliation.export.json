@@ -1,49 +1,17 @@
 {
-  "notice": "Export completed with explicit settings. This report does not establish visual, accessibility, scientific-integrity, or journal-submission compliance.",
-  "outputs": [
-    {
-      "format": "pdf",
-      "kind": "vector-container",
-      "path": "/Users/neo/repos/skipnorm/paper/fig5_toroidal_kblock_foliation.pdf",
-      "size_bytes": 80075
-    },
-    {
-      "format": "png",
-      "kind": "raster",
-      "path": "/Users/neo/repos/skipnorm/paper/fig5_toroidal_kblock_foliation.png",
-      "size_bytes": 838339
-    }
+  "raw_data": "results/stage2/stage2_results.json",
+  "dataset_split": "data/splits/coupled_torus_4d.npz (whole-orbit disjoint)",
+  "transformations": [
+    "degree-2 ridge readout from 1 scalar vs 2 block radii"
   ],
-  "provenance": {
-    "dataset_split": "data/splits/coupled_torus_4d.npz (whole-orbit disjoint)",
-    "missing_data": "none",
-    "raw_data": "results/stage2/stage2_results.json",
-    "transformations": [
-      "degree-2 ridge readout from 1 scalar vs 2 block radii"
-    ],
-    "uncertainty": "mean ± 1 SD across n=5 independent training seeds"
+  "uncertainty": "mean \u00b1 1 SD across n=5 independent training seeds",
+  "missing_data": "none",
+  "input_sha256": {
+    "results/stage2/stage2_results.json": "cb1f24dd8d99bd50638b720c69ee00580abb85c8a6204cf854378fc7f4b08414",
+    "experiments/stage4_generate_publication_figures.py": "86261dce6b16016ae0748b918129a2292157b40bb271eca2cf3d60125babbf8e"
   },
-  "schema_version": "1.0",
-  "settings": {
-    "bbox_inches": null,
-    "dpi": 600.0,
-    "facecolor": "white",
-    "figure_size_inches": [
-      7.2,
-      5.4
-    ],
-    "font_mode": "truetype",
-    "formats": [
-      "pdf",
-      "png"
-    ],
-    "pad_inches": 0.1,
-    "tiff_rgb": false,
-    "transparent": false
-  },
-  "versions": {
-    "matplotlib": "3.11.2",
-    "pillow": "12.3.0"
-  },
-  "warnings": []
+  "output_sha256": {
+    "paper/fig5_toroidal_kblock_foliation.pdf": "a2bce96a06760b96a3f4a56d6321e194a583cda978a474d58ced7e8395ad35dd",
+    "results/figures/fig5_toroidal_kblock_foliation.png": "f6da561b9ee5e21036cd57e1daf2ce3db07e55822d34dd6ce900a79d6a3c3196"
+  }
 }

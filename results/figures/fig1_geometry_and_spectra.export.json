@@ -1,50 +1,18 @@
 {
-  "notice": "Export completed with explicit settings. This report does not establish visual, accessibility, scientific-integrity, or journal-submission compliance.",
-  "outputs": [
-    {
-      "format": "pdf",
-      "kind": "vector-container",
-      "path": "/Users/neo/repos/skipnorm/paper/fig1_geometry_and_spectra.pdf",
-      "size_bytes": 101593
-    },
-    {
-      "format": "png",
-      "kind": "raster",
-      "path": "/Users/neo/repos/skipnorm/paper/fig1_geometry_and_spectra.png",
-      "size_bytes": 907157
-    }
+  "raw_data": "results/stage1/stage1_results.json",
+  "script": "experiments/stage4_generate_publication_figures.py",
+  "transformations": [
+    "exact JAX float64 SVD",
+    "depth-100 VJP pullback"
   ],
-  "provenance": {
-    "missing_data": "none",
-    "raw_data": "results/stage1/stage1_results.json",
-    "script": "experiments/stage4_generate_publication_figures.py",
-    "transformations": [
-      "exact JAX float64 SVD",
-      "depth-100 VJP pullback"
-    ],
-    "uncertainty": "deterministic analytical & machine-precision autodiff verification"
+  "uncertainty": "deterministic analytical & machine-precision autodiff verification",
+  "missing_data": "none",
+  "input_sha256": {
+    "results/stage1/stage1_results.json": "81341d024c4ca00e6f7370ecdc1946dfe13894f13868559ba00dc4c0ba4dc0ab",
+    "experiments/stage4_generate_publication_figures.py": "86261dce6b16016ae0748b918129a2292157b40bb271eca2cf3d60125babbf8e"
   },
-  "schema_version": "1.0",
-  "settings": {
-    "bbox_inches": null,
-    "dpi": 600.0,
-    "facecolor": "white",
-    "figure_size_inches": [
-      7.2,
-      5.4
-    ],
-    "font_mode": "truetype",
-    "formats": [
-      "pdf",
-      "png"
-    ],
-    "pad_inches": 0.1,
-    "tiff_rgb": false,
-    "transparent": false
-  },
-  "versions": {
-    "matplotlib": "3.11.2",
-    "pillow": "12.3.0"
-  },
-  "warnings": []
+  "output_sha256": {
+    "paper/fig1_geometry_and_spectra.pdf": "ef3bff523ce9bcde19a1cbc4f6ff073291eb818259b79b60ea40ca0c66536553",
+    "results/figures/fig1_geometry_and_spectra.png": "38f2409d7966a367e600fb1133fee53bb23019c03a97932cb1465ae424d9e7a0"
+  }
 }
